@@ -595,27 +595,54 @@ async function sendChat() {
 
 // --- AI目標プラン提案 ---
 async function getAIPlan() {
-  const goal = document.getElementById('goalInp').value;
-  if(!goal) return toast('目標を入力してください');
-  const btn = document.getElementById('aiBtn');
-  btn.textContent = 'AIが考え中...'; btn.disabled = true;
-  
-  try {
-    // AIzaSyAsLrX8juKuJOHjrav98Tz9ulLorivA844
-    const API_KEY = 'YOUR_GEMINI_API_KEY';
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ contents: [{parts: [{text: `フィットネス目標「${goal}」を達成するための簡単なアドバイスを3行で提案して。`}]}] })
-    });
-    const data = await res.json();
-    const plan = data.candidates[0].content.parts[0].text;
-    document.getElementById('aiPlanResult').innerHTML = `<div class="ai-plan">${plan}</div>`;
-    db.from('goals').insert({user_id: userId, goal_text: goal, ai_plan: plan}).then();
-  } catch (e) {
-    toast('APIキーを設定してください');
+
+  const goal =
+    document.getElementById("goalInp").value;
+
+  if (!goal) {
+    toast("目標を入力してください");
+    return;
   }
-  btn.textContent = 'AIにプランを提案してもらう'; btn.disabled = false;
+
+  const btn =
+    document.getElementById("aiBtn");
+
+  btn.textContent = "AIが考え中...";
+  btn.disabled = true;
+
+  try {
+
+    const res = await fetch(
+      "/api/gemini",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({
+          goal
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    document.getElementById(
+      "aiPlanResult"
+    ).innerHTML =
+      `<div class="ai-plan">
+        ${data.plan}
+      </div>`;
+
+  } catch(e){
+
+    toast("AI機能エラー");
+  }
+
+  btn.textContent =
+    "AIにプランを提案してもらう";
+
+  btn.disabled = false;
 }
 
 let mixedChart;
