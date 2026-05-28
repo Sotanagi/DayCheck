@@ -595,53 +595,46 @@ async function sendChat() {
 
 // --- AI目標プラン提案 ---
 async function getAIPlan() {
-
-  const goal =
-    document.getElementById("goalInp").value;
+  const goal = document.getElementById("goalInp").value;
 
   if (!goal) {
     toast("目標を入力してください");
     return;
   }
 
-  const btn =
-    document.getElementById("aiBtn");
+  const btn = document.getElementById("aiBtn");
+  const result = document.getElementById("aiPlanResult");
 
   btn.textContent = "AIが考え中...";
   btn.disabled = true;
+  result.innerHTML = "";
 
   try {
-
-    const res = await fetch(
-      "/api/gemini",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":"application/json"
-        },
-        body: JSON.stringify({
-          goal
-        })
-      }
-    );
+    const res = await fetch("/api/gemini", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ goal })
+    });
 
     const data = await res.json();
 
-    document.getElementById(
-      "aiPlanResult"
-    ).innerHTML =
-      `<div class="ai-plan">
-        ${data.plan}
-      </div>`;
+    if (!res.ok) {
+      result.innerHTML =
+        `<div class="ai-plan">エラー: ${data.error}</div>`;
+      return;
+    }
 
-  } catch(e){
+    result.innerHTML =
+      `<div class="ai-plan">${data.plan}</div>`;
 
-    toast("AI機能エラー");
+  } catch (e) {
+    result.innerHTML =
+      `<div class="ai-plan">通信エラー: ${e.message}</div>`;
   }
 
-  btn.textContent =
-    "AIにプランを提案してもらう";
-
+  btn.textContent = "AIにプランを提案してもらう";
   btn.disabled = false;
 }
 
