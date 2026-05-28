@@ -621,7 +621,7 @@ async function loadChat() {
 
   box.innerHTML = data.map(m => `
     <div class="chat-msg ${m.user_id === userId ? 'mine' : 'other'}">
-      <div class="msg-name">${m.user_name || 'ゲスト'}</div>
+      <div class="msg-name">${m.display_name || 'ゲスト'}</div>
       <div class="msg-bubble">${(m.message || '').replace(/\n/g, '<br>')}</div>
     </div>
   `).join('');
@@ -654,7 +654,7 @@ async function sendChat() {
     .insert({
       group_id: currentGroupId,
       user_id: userId,
-      user_name: displayName,
+      display_name: displayName || 'ゲスト',
       message: txt
     });
 
