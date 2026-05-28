@@ -1,14 +1,28 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-　
   try {
-    const { goal } = req.body;
+    if (req.method !== "POST") {
+      return res.status(405).json({
+        error: "POST以外は使えません"
+      });
+    }
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    const response = await fetch(
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "VercelのEnvironment VariablesにGEMINI_API_KEYが設定されていません"
+      });
+    }
+
+    const goal = req.body?.goal || "";
+
+    if (!goal) {
+      return res.status(400).json({
+        error: "goalが送られていません"
+      });
+    }
+
+    const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
@@ -20,7 +34,7 @@ export default async function handler(req, res) {
             {
               parts: [
                 {
-                  text: `フィットネス目標「${goal}」を達成するための具体的なアドバイスを3〜4行で提案してください。`
+                  text: `あなたはフィットネスコーチです。次の目標に対して、初心者にもわかる日本語で3〜4行の具体的なプランを作ってください。\n\n目標: ${goal}`
                 }
               ]
             }
@@ -29,15 +43,32 @@ export default async function handler(req, res) {
       }
     );
 
-    const data = await response.json();
-　
-    const plan =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "プランを作成できませんでした。";
+    const data = await geminiRes.json();
 
-    res.status(200).json({ plan });
+    if (!geminiRes.ok) {
+      return res.status(geminiRes.status).json({
+        error: data.error?.message || "Gemini APIエラー",
+        raw: data
+      });
+    }
+
+    const plan =
+      data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!plan) {
+      return res.status(500).json({
+        error: "Geminiからplanが返りませんでした",
+        raw: data
+      });
+    }
+
+    return res.status(200).json({
+      plan
+    });
 
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({
+      error: e.message
+    });
   }
 }
