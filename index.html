@@ -768,11 +768,20 @@ async function calcStreak() {
 }
 
 async function shareStreakToGroup() {
-  const strk = document.getElementById('streakNum').innerText;
-  const streakGrp = myGroups.find(g => g.id === 'streak');
-  if(streakGrp && strk !== '0日') {
-    await db.from('chat_messages').insert({ group_id: 'streak', user_id: userId, user_name: displayName, message: `🎉 今日の記録完了！連続記録: ${strk} 🔥`});
-  }
+  const strkText = document.getElementById('streakNum')?.textContent || '0日';
+  const streak = parseInt(strkText);
+
+  if (!currentGroupId) return;
+  if (!streak || streak <= 0) return;
+
+  await db.from('chat_messages').insert({
+    group_id: currentGroupId,
+    user_id: userId,
+    display_name: displayName || 'ゲスト',
+    message: `🎉 今日の記録完了！連続記録: ${strkText} 🔥`,
+    message_type: 'streak',
+    reactions: {}
+  });
 }
 
 // --- チャット機能 ---
