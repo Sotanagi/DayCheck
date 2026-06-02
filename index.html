@@ -507,9 +507,15 @@ const MICON = {'胸':'🫁','背中':'🏋️','脚':'🦵','肩':'🤸','腕':'
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('show');
-  document.getElementById('nt-' + id).classList.add('active');
+
+  const screen = document.getElementById(id);
+  const nav = document.getElementById('nt-' + id);
+
+  if (screen) screen.classList.add('show');
+  if (nav) nav.classList.add('active');
+
   if (id === 'hist') loadHistory();
+  if (id === 'chat') loadChat();
 }
 
 function toast(msg) {
