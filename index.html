@@ -123,6 +123,21 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(55px);background:var(--text);color:var(--card);padding:10px 18px;border-radius:12px;font-size:13px;opacity:0;transition:transform .3s,opacity .3s; z-index:999;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.animal-profile {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.animal-main {
+  font-size: 48px;
+  margin: 10px 0;
+}
+
+.ecosystem-view {
+  font-size: 28px;
+  line-height: 1.8;
+  letter-spacing: 4px;
+}
 </style>
 </head>
 <body>
@@ -160,6 +175,18 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
   </div>
 </div>
   </div>
+
+  <div class="card">
+  <h2>あなたの運動タイプ</h2>
+  <div id="animalProfile" class="animal-profile">
+    まだデータがありません
+  </div>
+
+  <h2 style="margin-top:16px;">あなたの生態系</h2>
+  <div id="ecosystemView" class="ecosystem-view">
+    🌱
+  </div>
+</div>
 
   <div class="feed" style="padding:16px;text-align:center;">
     <div class="sec-label" style="margin-bottom:8px;">連続記録（Streak）</div>
@@ -315,6 +342,122 @@ const EX = {
   '腕':  ['バーベルカール','トライセップスプレスダウン'],
   '体幹': ['プランク','クランチ','レッグレイズ'],
 };
+
+const ANIMAL_TYPES = {
+  wolf: { name: "狼", emoji: "🐺", label: "高強度筋トレ型", desc: "短時間でも強度高く追い込むタイプ" },
+  gorilla: { name: "ゴリラ", emoji: "🦍", label: "筋力特化型", desc: "筋トレ中心でパワーを伸ばすタイプ" },
+  buffalo: { name: "バッファロー", emoji: "🦬", label: "重量挑戦型", desc: "重さや自己ベスト更新を重視するタイプ" },
+  bear: { name: "熊", emoji: "🐻", label: "バランス型", desc: "筋トレも有酸素もバランスよく行うタイプ" },
+  deer: { name: "鹿", emoji: "🦌", label: "ランニング型", desc: "走る・歩くなど有酸素中心のタイプ" },
+  horse: { name: "馬", emoji: "🐎", label: "持久力型", desc: "長時間コツコツ続けるタイプ" },
+  dog: { name: "犬", emoji: "🐕", label: "散歩習慣型", desc: "無理なく日常に運動を入れるタイプ" },
+  rabbit: { name: "うさぎ", emoji: "🐇", label: "短時間集中型", desc: "短い時間でもこまめに動くタイプ" },
+  monkey: { name: "猿", emoji: "🐒", label: "チャレンジ型", desc: "色々な運動に挑戦するタイプ" },
+  dolphin: { name: "イルカ", emoji: "🐬", label: "楽しさ重視型", desc: "楽しい運動なら続けられるタイプ" },
+  otter: { name: "カワウソ", emoji: "🦦", label: "ゆる継続型", desc: "気楽に楽しく続けるタイプ" },
+  swan: { name: "白鳥", emoji: "🦢", label: "整える運動型", desc: "ストレッチやヨガなど体を整えるタイプ" },
+  squirrel: { name: "リス", emoji: "🐿️", label: "日常活動型", desc: "小さな運動を積み重ねるタイプ" },
+  cheetah: { name: "チーター", emoji: "🐆", label: "スピード型", desc: "短距離・高強度・瞬発力タイプ" },
+  turtle: { name: "亀", emoji: "🐢", label: "マイペース型", desc: "遅くても着実に継続するタイプ" },
+  eagle: { name: "鷹", emoji: "🦅", label: "目標達成型", desc: "明確な目標に向かって努力するタイプ" }
+};
+
+function decideAnimalType(logs) {
+  if (!logs || logs.length === 0) return "turtle";
+
+  const strength = logs.filter(l => l.type === "strength").length;
+  const walk = logs.filter(l => l.type === "walk").length;
+  const other = logs.filter(l => l.type === "other").length;
+  const total = logs.length;
+  const variety = new Set(logs.map(l => l.type)).size;
+
+  if (variety >= 3) return "monkey";
+  if (strength / total >= 0.8) return "gorilla";
+  if (walk / total >= 0.8) return "deer";
+  if (strength > 0 && walk > 0) return "bear";
+  if (other / total >= 0.7) return "dolphin";
+  if (total >= 5) return "eagle";
+  if (total >= 3) return "rabbit";
+
+  return "turtle";
+}
+
+function getUnlockedAnimals(logs) {
+  if (!logs || logs.length === 0) return ["turtle"];
+
+  const unlocked = new Set();
+
+  const strength = logs.filter(l => l.type === "strength").length;
+  const walk = logs.filter(l => l.type === "walk").length;
+  const other = logs.filter(l => l.type === "other").length;
+  const total = logs.length;
+  const variety = new Set(logs.map(l => l.type)).size;
+
+  if (total >= 1) unlocked.add("turtle");
+  if (total >= 3) unlocked.add("rabbit");
+  if (total >= 5) unlocked.add("eagle");
+
+  if (strength >= 1) unlocked.add("wolf");
+  if (strength >= 3) unlocked.add("gorilla");
+  if (strength >= 5) unlocked.add("buffalo");
+
+  if (walk >= 1) unlocked.add("dog");
+  if (walk >= 3) unlocked.add("deer");
+  if (walk >= 5) unlocked.add("horse");
+
+  if (other >= 1) unlocked.add("otter");
+  if (other >= 3) unlocked.add("dolphin");
+  if (other >= 5) unlocked.add("swan");
+
+  if (strength >= 2 && walk >= 2) unlocked.add("bear");
+  if (variety >= 3) unlocked.add("monkey");
+  if (total >= 10) unlocked.add("cheetah");
+  if (total >= 15) unlocked.add("squirrel");
+
+  return Array.from(unlocked);
+}
+
+async function updateAnimalProfile() {
+  if (!userId) return;
+
+  const { data: logs, error } = await db
+    .from("activity_logs")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("動物タイプ取得エラー:", error);
+    return;
+  }
+
+  const typeKey = decideAnimalType(logs);
+  const animal = ANIMAL_TYPES[typeKey];
+  const unlockedAnimals = getUnlockedAnimals(logs);
+
+  const profileEl = document.getElementById("animalProfile");
+  const ecoEl = document.getElementById("ecosystemView");
+
+  if (!profileEl || !ecoEl) return;
+
+  profileEl.innerHTML = `
+    <div class="animal-main">${animal.emoji}</div>
+    <strong>${animal.name}タイプ｜${animal.label}</strong><br>
+    ${animal.desc}
+  `;
+
+  ecoEl.innerHTML = `
+    🌲 ${unlockedAnimals.map(a => ANIMAL_TYPES[a].emoji).join(" 🌲 ")} 🌲
+  `;
+
+  await db.from("ecosystem_profiles").upsert({
+    user_id: userId,
+    animal_type: typeKey,
+    animal_name: animal.name,
+    ecosystem_count: unlockedAnimals.length,
+    total_exp: logs.length * 10,
+    last_updated: new Date().toISOString()
+  });
+}
 
 let customExercises = JSON.parse(localStorage.getItem('customExercises') || '{}');
 
@@ -532,13 +675,20 @@ async function afterSave() {
   toast('記録しました！');
 
   await Promise.all([loadPBests(), loadWalkBest()]);
-  renderHome();
-  calcStreak();
+renderHome();
+calcStreak();
 
-  await refreshChart();
+await refreshChart();
 
-  showScreen('home');
- await shareStreakToGroup();
+try {
+  await updateAnimalProfile();
+} catch (e) {
+  console.error("Animal profile error:", e);
+}
+
+showScreen('home');
+
+await shareStreakToGroup();
 }
 
 // --- 履歴表示 ---
