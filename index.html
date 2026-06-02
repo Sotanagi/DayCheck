@@ -998,10 +998,10 @@ async function getGraphData() {
     const reps = Number(r.reps) || 0;
 
     // 推定1RM = 重量 × (1 + 回数 / 30)
-    const rm = Math.round(weight * (1 + reps / 30) * 10) / 10;
+    const volume = weight * reps * sets;
 
     if (!byDate[date]) byDate[date] = { strength: 0, walk: 0 };
-    byDate[date].strength = Math.max(byDate[date].strength, rm);
+    byDate[date].strength += volume;
   });
 
   (wRes.data || []).forEach(r => {
@@ -1022,7 +1022,7 @@ async function getGraphData() {
       return `${Number(parts[1])}/${Number(parts[2])}`;
     }),
     bodyWeight: dates.map(() => null),
-    strength: dates.map(d => byDate[d].strength || 0),
+    strength: dates.map(d => Math.round(byDate[d].strength || 0)),
     walk: dates.map(d => Math.round((byDate[d].walk || 0) * 10) / 10)
   };
 }
