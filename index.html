@@ -835,45 +835,6 @@ async function sendChat() {
   }
 
   const inp = document.getElementById('chatInp');
-  if (!inp) return;
-
-  const txt = inp.value.trim();
-  if (!txt) {
-    toast('コメントを入力してください');
-    return;
-  }
-
-  inp.disabled = true;
-
-  const { error } = await db
-    .from('chat_messages')
-    .insert({
-      group_id: currentGroupId,
-      user_id: userId,
-      display_name: displayName || 'ゲスト',
-      message: txt,
-      message_type: 'normal'
-    });
-
-  inp.disabled = false;
-
-  if (error) {
-    toast('コメント送信に失敗しました');
-    return;
-  }
-
-  inp.value = '';
-  toast('コメントを送信しました');
-  await loadChat();
-}
-
-async function sendChat() {
-  if (!currentGroupId) {
-    toast('先にグループを作成または選択してください');
-    return;
-  }
-
-  const inp = document.getElementById('chatInp');
   const box = document.getElementById('chatBox');
 
   if (!inp) return;
