@@ -202,6 +202,16 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
     <div id="aiPlanResult"></div>
   </div>
 
+  <div class="card">
+  <div class="card-label">今日の体重（任意）</div>
+  <div class="input-row">
+    <div class="input-group">
+      <input class="inp" type="number" id="inBodyWeight" step="0.1" placeholder="例：70.5">
+    </div>
+    <button class="save-btn" style="width:auto; padding:10px 14px;" onclick="saveBodyWeightOnly()">保存</button>
+  </div>
+</div>
+
   <div>
     <div class="sec-label">自己ベスト</div>
     <div class="pr-scroll" id="prScroll"><div style="color:var(--muted);font-size:13px;">読み込み中...</div></div>
@@ -250,13 +260,6 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
   <div class="input-group"><label>重量 kg</label><input class="inp" type="number" id="inW"></div>
   <div class="input-group"><label>回数</label><input class="inp" type="number" id="inR"></div>
   <div class="input-group"><label>セット</label><input class="inp" type="number" id="inS"></div>
-</div>
-
-<div class="input-row">
-  <div class="input-group">
-    <label>体重（任意）</label>
-    <input class="inp" type="number" id="inBodyWeight" step="0.1" placeholder="例：70.5">
-  </div>
 </div>
 
 <button class="save-btn" onclick="saveStrength()">記録する</button>
@@ -687,6 +690,12 @@ function pickExercise(ex) {
   });
 }
 
+  async function saveBodyWeightOnly() {
+  await saveBodyWeight();
+  toast('体重を保存しました');
+  await refreshChart();
+}
+
 async function saveStrength() {
   const w = Number(document.getElementById('inW').value);
   const r = Number(document.getElementById('inR').value);
@@ -706,8 +715,6 @@ async function saveStrength() {
     sets: s
   });
 
-  await saveBodyWeight();
-
   toast(`記録しました！ +${xp}XP`);
   afterSave();
 }
@@ -715,8 +722,6 @@ async function saveWalk() {
   const d=document.getElementById('wDist').value, t=document.getElementById('wTime').value;
   if(!d||!t) return toast('数値を入力してください');
   await db.from('walk_logs').insert({user_id:userId, distance_km:d, duration_min:t});
-
-  await saveBodyWeight();
   
   afterSave();
 }
