@@ -1022,9 +1022,10 @@ async function getGraphData() {
     const date = r.logged_at.split('T')[0];
     const weight = Number(r.weight_kg) || 0;
     const reps = Number(r.reps) || 0;
+    const sets = Number(r.sets) || 1;
 
   // 運動量 = 重量 × 回数 × セット数
-const volume = weight * reps * sets;
+    const volume = weight * reps * sets;
 
     if (!byDate[date]) byDate[date] = { strength: 0, walk: 0 };
     byDate[date].strength += volume;
