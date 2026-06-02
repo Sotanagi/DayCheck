@@ -251,6 +251,10 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
         <div class="input-group"><label>回数</label><input class="inp" type="number" id="inR"></div>
         <div class="input-group"><label>セット</label><input class="inp" type="number" id="inS"></div>
       </div>
+      <div class="input-row">
+  <label>体重（任意）</label>
+  <input id="inBodyWeight" type="number" step="0.1" placeholder="例：70.5">
+</div>
       <button class="save-btn" onclick="saveStrength()">記録する</button>
     </div>
   </div>
@@ -663,6 +667,16 @@ function pickExercise(ex) {
   goWS(2);
 }
 
+  async function saveBodyWeight() {
+  const bw = Number(document.getElementById('inBodyWeight').value);
+  if (!bw) return;
+
+  await db.from('body_logs').insert({
+    user_id: userId,
+    weight_kg: bw
+  });
+}
+
 async function saveStrength() {
   const w = Number(document.getElementById('inW').value);
   const r = Number(document.getElementById('inR').value);
@@ -682,6 +696,8 @@ async function saveStrength() {
     sets: s
   });
 
+  await saveBodyWeight();
+
   toast(`記録しました！ +${xp}XP`);
   afterSave();
 }
@@ -689,6 +705,9 @@ async function saveWalk() {
   const d=document.getElementById('wDist').value, t=document.getElementById('wTime').value;
   if(!d||!t) return toast('数値を入力してください');
   await db.from('walk_logs').insert({user_id:userId, distance_km:d, duration_min:t});
+
+  await saveBodyWeight();
+  
   afterSave();
 }
 async function saveOther() {
