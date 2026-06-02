@@ -166,8 +166,9 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
     <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
       <input type="checkbox" checked onchange="toggleDataset(0)"> 体重
     </label>
-    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-      <input type="checkbox" checked onchange="toggleDataset(1)"> 筋トレ(RM)
+<label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+  <input type="checkbox" checked onchange="toggleDataset(1)"> 筋トレ(総ボリューム)
+</label>
     </label>
     <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
       <input type="checkbox" checked onchange="toggleDataset(2)"> ウォーキング
@@ -1022,8 +1023,8 @@ async function getGraphData() {
     const weight = Number(r.weight_kg) || 0;
     const reps = Number(r.reps) || 0;
 
-    // 推定1RM = 重量 × (1 + 回数 / 30)
-    const volume = weight * reps * sets;
+  // 運動量 = 重量 × 回数 × セット数
+const volume = weight * reps * sets;
 
     if (!byDate[date]) byDate[date] = { strength: 0, walk: 0 };
     byDate[date].strength += volume;
