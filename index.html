@@ -1028,12 +1028,23 @@ async function getGraphData() {
     return { labels: [], bodyWeight: [], strength: [], walk: [] };
   }
 
-  const [sRes, wRes] = await Promise.all([
-    db.from('strength_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
-    db.from('walk_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true })
-  ]);
+ const [sRes, wRes, bRes] = await Promise.all([
+  db.from('strength_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
+  db.from('walk_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
+  db.from('body_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true })
+]);
 
   const byDate = {};
+
+  (bRes.data || []).forEach(r => {
+  if (!r.logged_at) return;
+
+  const date = r.logged_at.split('T')[0];
+  const bw = Number(r.weight_kg) || null;
+
+  if (!byDate[date]) byDate[date] = { strength: 0, walk: 0, bodyWeight: null };
+  byDate[date].bodyWeight = bw;
+});
 
   (sRes.data || []).forEach(r => {
     if (!r.logged_at) return;
@@ -1046,7 +1057,7 @@ async function getGraphData() {
   // 運動量 = 重量 × 回数 × セット数
     const volume = weight * reps * sets;
 
-    if (!byDate[date]) byDate[date] = { strength: 0, walk: 0 };
+ 　 if (!byDate[date]) byDate[date] = { strength: 0, walk: 0, bodyWeight: null };
     byDate[date].strength += volume;
   });
 
@@ -1056,7 +1067,7 @@ async function getGraphData() {
     const date = r.logged_at.split('T')[0];
     const dist = Number(r.distance_km) || 0;
 
-    if (!byDate[date]) byDate[date] = { strength: 0, walk: 0 };
+    if (!byDate[date]) byDate[date] = { strength: 0, walk: 0, bodyWeight: null };
     byDate[date].walk += dist;
   });
 
@@ -1067,7 +1078,7 @@ async function getGraphData() {
       const parts = d.split('-');
       return `${Number(parts[1])}/${Number(parts[2])}`;
     }),
-    bodyWeight: dates.map(() => null),
+    bodyWeight: dates.map(d => byDate[d].bodyWeight),
     strength: dates.map(d => Math.round(byDate[d].strength || 0)),
     walk: dates.map(d => Math.round((byDate[d].walk || 0) * 10) / 10)
   };
@@ -1098,11 +1109,12 @@ async function initChart() {
           yAxisID: 'y'
         },
         {
-          label: '筋トレ(RM)',
+          label: '筋トレ量',
           data: graph.strength,
           borderColor: '#2A7A3B',
           backgroundColor: 'rgba(42,122,59,0.12)',
           tension: 0.3,
+          spanGaps: true,
           yAxisID: 'y1'
         },
         {
@@ -1133,7 +1145,7 @@ async function initChart() {
           type: 'linear',
           position: 'right',
           grid: { drawOnChartArea: false },
-          title: { display: true, text: 'RM / km' }
+          title: { display: true, text: '筋トレ量 / km' }
         }
       },
       plugins: {
@@ -1142,7 +1154,7 @@ async function initChart() {
     }
   });
 }
-
+  
 // 記録を保存したあとにグラフを更新する
 async function refreshChart() {
   if (!mixedChart) return;
