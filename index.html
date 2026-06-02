@@ -560,17 +560,26 @@ async function loadPBests() {
     }
   });
 }
+
 async function loadWalkBest() {
   const { data } = await db.from('walk_logs').select('*').eq('user_id', userId);
   if (data && data.length) {
     walkBest = { distance_km: Math.max(...data.map(r => r.distance_km)) };
   }
 }
+
 function renderHome() {
   const scroll = document.getElementById('prScroll');
   let cards = [];
-  if (walkBest) cards.push(`<div class="pr-card gold"><div class="pr-exname">🚶 ウォーク</div><div class="pr-val">${walkBest.distance_km} km</div></div>`);
-  Object.entries(pBests).forEach(([ex, b]) => cards.push(`<div class="pr-card"><div class="pr-exname">${ex}</div><div class="pr-val">${b.maxWeight} kg</div></div>`));
+
+  if (walkBest) {
+    cards.push(`<div class="pr-card gold"><div class="pr-exname">🚶 最長ウォーク</div><div class="pr-val">${walkBest.distance_km} km</div></div>`);
+  }
+
+  Object.entries(pBests).forEach(([ex, b]) => {
+    cards.push(`<div class="pr-card"><div class="pr-exname">${ex} 最高重量</div><div class="pr-val">${b.maxWeight} kg</div></div>`);
+  });
+
   scroll.innerHTML = cards.length ? cards.join('') : '<div style="font-size:12px;color:gray;">記録なし</div>';
 }
 
@@ -654,9 +663,25 @@ function pickExercise(ex) {
 }
 
 async function saveStrength() {
-  const w=document.getElementById('inW').value, r=document.getElementById('inR').value, s=document.getElementById('inS').value;
-  if(!w||!r||!s) return toast('数値を入力してください');
-  await db.from('strength_logs').insert({user_id:userId, muscle_group:curMuscle, exercise:curExercise, weight_kg:w, reps:r, sets:s});
+  const w = Number(document.getElementById('inW').value);
+  const r = Number(document.getElementById('inR').value);
+  const s = Number(document.getElementById('inS').value);
+
+  if (!w || !r || !s) return toast('数値を入力してください');
+
+  const volume = w * r * s;
+  const xp = Math.floor(volume / 100);
+
+  await db.from('strength_logs').insert({
+    user_id: userId,
+    muscle_group: curMuscle,
+    exercise: curExercise,
+    weight_kg: w,
+    reps: r,
+    sets: s
+  });
+
+  toast(`記録しました！ +${xp}XP`);
   afterSave();
 }
 async function saveWalk() {
