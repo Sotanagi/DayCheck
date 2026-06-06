@@ -196,6 +196,28 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
     </div>
   </div>
 
+  <div class="card">
+  <h2>今週の気分変化</h2>
+
+  <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; text-align:center; margin-top:12px;">
+    <div>
+      <div style="font-size:11px; color:var(--muted);">運動前</div>
+      <div id="moodBeforeAvg" style="font-size:28px; font-weight:800; color:var(--text);">--</div>
+    </div>
+
+    <div style="font-size:24px; color:var(--accent);">→</div>
+
+    <div>
+      <div style="font-size:11px; color:var(--muted);">運動後</div>
+      <div id="moodAfterAvg" style="font-size:28px; font-weight:800; color:var(--accent);">--</div>
+    </div>
+  </div>
+
+  <div id="moodDiffText" style="text-align:center; margin-top:10px; font-size:13px; font-weight:700; color:var(--accent);">
+    記録すると表示されます
+  </div>
+</div>
+
   <div class="feed" style="padding:16px;text-align:center;">
     <div class="sec-label" style="margin-bottom:8px;">連続記録（Streak）</div>
     <div id="streakNum" style="font-size:34px;font-weight:700;color:var(--accent);">0日</div>
@@ -918,6 +940,78 @@ function resetMoodInputs() {
     if (el) el.value = '';
   });
 }
+
+  async function updateMoodSummary() {
+  if (!userId) return;
+
+  const now = new Date();
+  const day = now.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const start = new Date(now);
+  start.setDate(now.getDate() + diffToMonday);
+  start.setHours(0, 0, 0, 0);
+
+  const fromDate = start.toISOString();
+
+  const [sRes, wRes, oRes] = await Promise.all([
+    db.from('strength_logs')
+      .select('mood_before, mood_after, logged_at')
+      .eq('user_id', userId)
+      .gte('logged_at', fromDate),
+
+    db.from('walk_logs')
+      .select('mood_before, mood_after, logged_at')
+      .eq('user_id', userId)
+      .gte('logged_at', fromDate),
+
+    db.from('activity_logs')
+      .select('mood_before, mood_after')
+      .eq('user_id', userId)
+  ]);
+
+  const logs = [
+    ...(sRes.data || []),
+    ...(wRes.data || []),
+    ...(oRes.data || [])
+  ];
+
+  const beforeValues = logs
+    .map(log => Number(log.mood_before))
+    .filter(v => v >= 1 && v <= 5);
+
+  const afterValues = logs
+    .map(log => Number(log.mood_after))
+    .filter(v => v >= 1 && v <= 5);
+
+  const beforeEl = document.getElementById('moodBeforeAvg');
+  const afterEl = document.getElementById('moodAfterAvg');
+  const diffEl = document.getElementById('moodDiffText');
+
+  if (!beforeEl || !afterEl || !diffEl) return;
+
+  if (!beforeValues.length || !afterValues.length) {
+    beforeEl.textContent = '--';
+    afterEl.textContent = '--';
+    diffEl.textContent = '記録すると表示されます';
+    return;
+  }
+
+  const beforeAvg = beforeValues.reduce((sum, v) => sum + v, 0) / beforeValues.length;
+  const afterAvg = afterValues.reduce((sum, v) => sum + v, 0) / afterValues.length;
+  const diff = afterAvg - beforeAvg;
+
+  beforeEl.textContent = beforeAvg.toFixed(1);
+  afterEl.textContent = afterAvg.toFixed(1);
+
+  if (diff > 0) {
+    diffEl.textContent = `今週の気分は +${diff.toFixed(1)} 改善しています`;
+  } else if (diff < 0) {
+    diffEl.textContent = `今週の気分は ${diff.toFixed(1)} 下がっています`;
+  } else {
+    diffEl.textContent = '今週の気分は変化なしです';
+  }
+}
   
 async function afterSave() {
   toast('記録しました！');
@@ -927,6 +1021,18 @@ async function afterSave() {
   calcStreak();
 
   await refreshChart();
+
+  try {
+    await updateMoodSummary();
+  } catch (e) {
+    console.error("Mood summary error:", e);
+  }
+  
+  try {
+  await updateMoodSummary();
+} catch (e) {
+  console.error("Mood summary error:", e);
+}
 
   try {
     await updateAnimalProfile();
