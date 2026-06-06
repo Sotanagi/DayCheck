@@ -79,6 +79,9 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 .inp-txt{font-size:14px;text-align:left;}
 
 .walk-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
+.mood-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
+.mood-select{font-size:13px;text-align:center;}
+
 .calc-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
 .calc-val{font-size:24px;color:var(--accent);font-weight:bold;}
 
@@ -123,6 +126,7 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(55px);background:var(--text);color:var(--card);padding:10px 18px;border-radius:12px;font-size:13px;opacity:0;transition:transform .3s,opacity .3s; z-index:999;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
 .animal-profile {
   font-size: 15px;
   line-height: 1.7;
@@ -140,6 +144,7 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 }
 </style>
 </head>
+
 <body>
 
 <header class="hdr">
@@ -159,35 +164,37 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
     <div class="hero-greet" id="heroGreet">おはようございます 👋</div>
     <div class="hero-title">前回の<em>自分を超えよう</em></div>
     <div class="hero-sub" id="heroSub">記録を読み込み中...</div>
-　　<div id="graphContainer" style="margin-top:20px; background: rgba(255,255,255,0.5); padding:15px; border-radius:15px;">
-  <canvas id="mixedChart"></canvas>
-  
-  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;" id="chartControls">
-    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-      <input type="checkbox" checked onchange="toggleDataset(0)"> 体重
-    </label>
-<label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-  <input type="checkbox" checked onchange="toggleDataset(1)"> 筋トレ(総ボリューム)
-</label>
-    </label>
-    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-      <input type="checkbox" checked onchange="toggleDataset(2)"> ウォーキング
-    </label>
-  </div>
-</div>
+
+    <div id="graphContainer" style="margin-top:20px; background: rgba(255,255,255,0.5); padding:15px; border-radius:15px;">
+      <canvas id="mixedChart"></canvas>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;" id="chartControls">
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked onchange="toggleDataset(0)"> 体重
+        </label>
+
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked onchange="toggleDataset(1)"> 筋トレ(総ボリューム)
+        </label>
+
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked onchange="toggleDataset(2)"> ウォーキング
+        </label>
+      </div>
+    </div>
   </div>
 
   <div class="card">
-  <h2>あなたの運動タイプ</h2>
-  <div id="animalProfile" class="animal-profile">
-    まだデータがありません
-  </div>
+    <h2>あなたの運動タイプ</h2>
+    <div id="animalProfile" class="animal-profile">
+      まだデータがありません
+    </div>
 
-  <h2 style="margin-top:16px;">あなたの生態系</h2>
-  <div id="ecosystemView" class="ecosystem-view">
-    🌱
+    <h2 style="margin-top:16px;">あなたの生態系</h2>
+    <div id="ecosystemView" class="ecosystem-view">
+      🌱
+    </div>
   </div>
-</div>
 
   <div class="feed" style="padding:16px;text-align:center;">
     <div class="sec-label" style="margin-bottom:8px;">連続記録（Streak）</div>
@@ -203,22 +210,27 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
   </div>
 
   <div class="card">
-  <div class="card-label">今日の体重（任意）</div>
-  <div class="input-row">
-    <div class="input-group">
-      <input class="inp" type="number" id="inBodyWeight" step="0.1" placeholder="例：70.5">
+    <div class="card-label">今日の体重（任意）</div>
+    <div class="input-row">
+      <div class="input-group">
+        <input class="inp" type="number" id="inBodyWeight" step="0.1" placeholder="例：70.5">
+      </div>
+      <button class="save-btn" style="width:auto; padding:10px 14px;" onclick="saveBodyWeightOnly()">保存</button>
     </div>
-    <button class="save-btn" style="width:auto; padding:10px 14px;" onclick="saveBodyWeightOnly()">保存</button>
   </div>
-</div>
 
   <div>
     <div class="sec-label">自己ベスト</div>
-    <div class="pr-scroll" id="prScroll"><div style="color:var(--muted);font-size:13px;">読み込み中...</div></div>
+    <div class="pr-scroll" id="prScroll">
+      <div style="color:var(--muted);font-size:13px;">読み込み中...</div>
+    </div>
   </div>
+
   <div>
     <div class="sec-label">最近の活動</div>
-    <div class="feed" id="recentFeed"><div class="feed-empty">記録がありません</div></div>
+    <div class="feed" id="recentFeed">
+      <div class="feed-empty">記録がありません</div>
+    </div>
   </div>
 </div>
 
@@ -241,14 +253,18 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
         <button class="muscle-btn" onclick="pickMuscle('体幹')"><span class="mb-icon">⚡</span><span class="mb-name">体幹</span></button>
       </div>
     </div>
+
     <div class="wizard-step" id="ws1">
       <button class="back-btn" onclick="goWS(0)">← 戻る</button>
       <div class="card-label" id="ws1Label">種目を選ぶ</div>
       <div class="ex-list" id="exList"></div>
     </div>
+
     <div class="wizard-step" id="ws2">
       <button class="back-btn" onclick="goWS(1)">← 戻る</button>
+
       <div class="card-label" id="ws2Label"></div>
+
       <div class="prev-rec empty" id="sPrevRec">
         <div>
           <div class="prec-label">前回の自己ベスト</div>
@@ -256,27 +272,133 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
         </div>
         <div style="font-size:26px;">✨</div>
       </div>
-      <div class="input-row">
-  <div class="input-group"><label>重量 kg</label><input class="inp" type="number" id="inW"></div>
-  <div class="input-group"><label>回数</label><input class="inp" type="number" id="inR"></div>
-  <div class="input-group"><label>セット</label><input class="inp" type="number" id="inS"></div>
-</div>
 
-<button class="save-btn" onclick="saveStrength()">記録する</button>
-</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>重量 kg</label>
+          <input class="inp" type="number" id="inW">
+        </div>
+
+        <div class="input-group">
+          <label>回数</label>
+          <input class="inp" type="number" id="inR">
+        </div>
+
+        <div class="input-group">
+          <label>セット</label>
+          <input class="inp" type="number" id="inS">
+        </div>
+      </div>
+
+      <div class="mood-row">
+        <div class="input-group">
+          <label>運動前の気分</label>
+          <select class="inp mood-select" id="strengthMoodBefore">
+            <option value="">選択しない</option>
+            <option value="1">😞 1</option>
+            <option value="2">🙁 2</option>
+            <option value="3">😐 3</option>
+            <option value="4">🙂 4</option>
+            <option value="5">😄 5</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>運動後の気分</label>
+          <select class="inp mood-select" id="strengthMoodAfter">
+            <option value="">選択しない</option>
+            <option value="1">😞 1</option>
+            <option value="2">🙁 2</option>
+            <option value="3">😐 3</option>
+            <option value="4">🙂 4</option>
+            <option value="5">😄 5</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="saveStrength()">記録する</button>
+    </div>
   </div>
-      
+
   <div id="wPanel" style="display:none;">
     <div class="walk-row">
-      <div class="input-group"><label>距離 km</label><input class="inp" type="number" id="wDist"></div>
-      <div class="input-group"><label>時間 分</label><input class="inp" type="number" id="wTime"></div>
+      <div class="input-group">
+        <label>距離 km</label>
+        <input class="inp" type="number" id="wDist">
+      </div>
+
+      <div class="input-group">
+        <label>時間 分</label>
+        <input class="inp" type="number" id="wTime">
+      </div>
     </div>
+
+    <div class="mood-row">
+      <div class="input-group">
+        <label>運動前の気分</label>
+        <select class="inp mood-select" id="walkMoodBefore">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>運動後の気分</label>
+        <select class="inp mood-select" id="walkMoodAfter">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+    </div>
+
     <button class="save-btn" onclick="saveWalk()">記録する</button>
   </div>
 
   <div id="oPanel" style="display:none;">
-    <div class="input-group" style="margin-bottom:10px;"><label>活動名</label><input class="inp inp-txt" type="text" id="oAct" placeholder="例：ヨガ、水泳、掃除"></div>
-    <div class="input-group" style="margin-bottom:10px;"><label>詳細（時間や感想など）</label><input class="inp inp-txt" type="text" id="oDet" placeholder="30分頑張った！"></div>
+    <div class="input-group" style="margin-bottom:10px;">
+      <label>活動名</label>
+      <input class="inp inp-txt" type="text" id="oAct" placeholder="例：ヨガ、水泳、掃除">
+    </div>
+
+    <div class="input-group" style="margin-bottom:10px;">
+      <label>詳細（時間や感想など）</label>
+      <input class="inp inp-txt" type="text" id="oDet" placeholder="30分頑張った！">
+    </div>
+
+    <div class="mood-row">
+      <div class="input-group">
+        <label>運動前の気分</label>
+        <select class="inp mood-select" id="otherMoodBefore">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>運動後の気分</label>
+        <select class="inp mood-select" id="otherMoodAfter">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+    </div>
+
     <button class="save-btn" onclick="saveOther()">記録する</button>
   </div>
 </div>
@@ -291,7 +413,11 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
       <button class="chip-btn" onclick="openNameModal()">👤 名前変更</button>
     </div>
   </div>
-  <div class="chat-box" id="chatBox"><div class="feed-empty">グループを選択してください</div></div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="feed-empty">グループを選択してください</div>
+  </div>
+
   <div class="chat-input-row">
     <input class="chat-inp" id="chatInp" placeholder="メッセージを送る..." onkeydown="if(event.key==='Enter')sendChat()">
     <button class="send-btn" onclick="sendChat()">送信</button>
@@ -299,7 +425,9 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 </div>
 
 <div id="hist" class="screen">
-  <div class="feed" id="historyFeed"><div class="feed-empty">読み込み中...</div></div>
+  <div class="feed" id="historyFeed">
+    <div class="feed-empty">読み込み中...</div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="nameModal">
@@ -324,6 +452,7 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
+
 // --- Supabase 初期化 ---
 const SUPABASE_URL = "https://jfdbbtvnegiqmdywtcbt.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_xnCF0lig_GYq5aw2TTzGgQ_6NRyRIyW";
@@ -680,7 +809,7 @@ function pickExercise(ex) {
   goWS(2);
 }
 
-  async function saveBodyWeight() {
+async function saveBodyWeight() {
   const bw = Number(document.getElementById('inBodyWeight').value);
   if (!bw) return;
 
@@ -690,7 +819,7 @@ function pickExercise(ex) {
   });
 }
 
-  async function saveBodyWeightOnly() {
+async function saveBodyWeightOnly() {
   await saveBodyWeight();
   toast('体重を保存しました');
   await refreshChart();
@@ -700,6 +829,12 @@ async function saveStrength() {
   const w = Number(document.getElementById('inW').value);
   const r = Number(document.getElementById('inR').value);
   const s = Number(document.getElementById('inS').value);
+
+  const moodBeforeRaw = document.getElementById('strengthMoodBefore')?.value;
+  const moodAfterRaw = document.getElementById('strengthMoodAfter')?.value;
+
+  const mood_before = moodBeforeRaw ? Number(moodBeforeRaw) : null;
+  const mood_after = moodAfterRaw ? Number(moodAfterRaw) : null;
 
   if (!w || !r || !s) return toast('数値を入力してください');
 
@@ -712,43 +847,98 @@ async function saveStrength() {
     exercise: curExercise,
     weight_kg: w,
     reps: r,
-    sets: s
+    sets: s,
+    mood_before,
+    mood_after
   });
 
   toast(`記録しました！ +${xp}XP`);
-  afterSave();
+  await afterSave();
 }
+
 async function saveWalk() {
-  const d=document.getElementById('wDist').value, t=document.getElementById('wTime').value;
-  if(!d||!t) return toast('数値を入力してください');
-  await db.from('walk_logs').insert({user_id:userId, distance_km:d, duration_min:t});
-  
-  afterSave();
+  const d = Number(document.getElementById('wDist').value);
+  const t = Number(document.getElementById('wTime').value);
+
+  const moodBeforeRaw = document.getElementById('walkMoodBefore')?.value;
+  const moodAfterRaw = document.getElementById('walkMoodAfter')?.value;
+
+  const mood_before = moodBeforeRaw ? Number(moodBeforeRaw) : null;
+  const mood_after = moodAfterRaw ? Number(moodAfterRaw) : null;
+
+  if (!d || !t) return toast('数値を入力してください');
+
+  await db.from('walk_logs').insert({
+    user_id: userId,
+    distance_km: d,
+    duration_min: t,
+    mood_before,
+    mood_after
+  });
+
+  await afterSave();
 }
+
 async function saveOther() {
-  const a=document.getElementById('oAct').value, d=document.getElementById('oDet').value;
-  if(!a) return toast('活動名を入力してください');
-  await db.from('other_logs').insert({user_id:userId, activity_name:a, details:d});
-  afterSave();
+  const a = document.getElementById('oAct').value;
+  const d = document.getElementById('oDet').value;
+
+  const moodBeforeRaw = document.getElementById('otherMoodBefore')?.value;
+  const moodAfterRaw = document.getElementById('otherMoodAfter')?.value;
+
+  const mood_before = moodBeforeRaw ? Number(moodBeforeRaw) : null;
+  const mood_after = moodAfterRaw ? Number(moodAfterRaw) : null;
+
+  if (!a) return toast('活動名を入力してください');
+
+  await db.from('activity_logs').insert({
+    user_id: userId,
+    activity_type: a,
+    duration_minutes: null,
+    ap_points: 1,
+    mood_before,
+    mood_after
+  });
+
+  await afterSave();
 }
+
+function resetMoodInputs() {
+  const ids = [
+    'strengthMoodBefore',
+    'strengthMoodAfter',
+    'walkMoodBefore',
+    'walkMoodAfter',
+    'otherMoodBefore',
+    'otherMoodAfter'
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+  
 async function afterSave() {
   toast('記録しました！');
 
   await Promise.all([loadPBests(), loadWalkBest()]);
-renderHome();
-calcStreak();
+  renderHome();
+  calcStreak();
 
-await refreshChart();
+  await refreshChart();
 
-try {
-  await updateAnimalProfile();
-} catch (e) {
-  console.error("Animal profile error:", e);
-}
+  try {
+    await updateAnimalProfile();
+  } catch (e) {
+    console.error("Animal profile error:", e);
+  }
 
-showScreen('home');
+  resetMoodInputs();
 
-await shareStreakToGroup();
+  showScreen('home');
+
+  await shareStreakToGroup();
 }
 
 // --- 履歴表示 ---
