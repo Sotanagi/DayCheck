@@ -168,21 +168,31 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
     <div id="graphContainer" style="margin-top:20px; background: rgba(255,255,255,0.5); padding:15px; border-radius:15px;">
       <canvas id="mixedChart"></canvas>
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;" id="chartControls">
-        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-          <input type="checkbox" checked onchange="toggleDataset(0)"> 体重
-        </label>
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;" id="chartControls">
 
-        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-          <input type="checkbox" checked onchange="toggleDataset(1)"> 筋トレ(総ボリューム)
-        </label>
+  <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+    <input type="checkbox" checked onchange="toggleDataset(0)">
+    体重
+  </label>
 
-        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-          <input type="checkbox" checked onchange="toggleDataset(2)"> ウォーキング
-        </label>
-      </div>
-    </div>
-  </div>
+  <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+    <input type="checkbox" checked onchange="toggleDataset(1)">
+    筋トレ
+  </label>
+
+  <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+    <input type="checkbox" checked onchange="toggleDataset(2)">
+    ウォーク
+  </label>
+
+  <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+    <input type="checkbox" checked onchange="toggleDataset(3)">
+    気分改善
+  </label>
+
+</div>
+
+</div>
 
   <div class="card">
     <h2>あなたの運動タイプ</h2>
@@ -1303,6 +1313,16 @@ async function getAIPlan() {
 
 let mixedChart;
 
+  function toggleDataset(index) {
+  if (!mixedChart) return;
+
+  const ds = mixedChart.data.datasets[index];
+  if (!ds) return;
+
+  ds.hidden = !ds.hidden;
+  mixedChart.update();
+}
+
 // Supabaseの記録からグラフ用データを作る
 async function getGraphData() {
   if (!db) {
@@ -1376,6 +1396,200 @@ async function initChart() {
   const graph = await getGraphData();
 
   mixedChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: graph.labels,
+    datasets: [
+      {
+        label: '体重(kg)',
+        data: graph.bodyWeight,
+        borderColor: '#C62828',
+        backgroundColor: 'rgba(198,40,40,0.12)',
+        tension: 0.3,
+        spanGaps: true,
+        yAxisID: 'y'
+      },
+      {
+        label: '筋トレ量',
+        data: graph.strength,
+        borderColor: '#2A7A3B',
+        backgroundColor: 'rgba(42,122,59,0.12)',
+        tension: 0.3,
+        spanGaps: true,
+        yAxisID: 'y1'
+      },
+      {
+        label: 'ウォーキング(km)',
+        data: graph.walk,
+        backgroundColor: 'rgba(42,122,59,0.2)',
+        borderColor: '#2A7A3B',
+        borderWidth: 1,
+        type: 'bar',
+        yAxisID: 'y1'
+      },
+      {
+        label: '気分改善量',
+        data: graph.moodDiff,
+        borderColor: '#8B6914',
+        backgroundColor: 'rgba(139,105,20,0.12)',
+        tension: 0.3,
+        spanGaps: true,
+        yAxisID: 'y2'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    scales: {
+      y: {
+        type: 'linear',
+        position: 'left',
+        title: { display: true, text: '体重 kg' }
+      },
+      y1: {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: '筋トレ量 / km' }
+      },
+      y2: {
+        type: 'linear',
+        position: 'right',
+        min: -4,
+        max: 4,
+        display: false,
+        grid: { drawOnChartArea: false }
+      }
+    },
+    plugins: {
+      legend: { display: false }
+    }
+  }
+});
+  
+// 記録を保存したあとにグラフを更新する
+// 記録を保存したあとにグラフを更新する
+let mixedChart;
+
+function toggleDataset(index) {
+  if (!mixedChart) return;
+
+  const ds = mixedChart.data.datasets[index];
+  if (!ds) return;
+
+  ds.hidden = !ds.hidden;
+  mixedChart.update();
+}
+
+async function refreshChart() {
+  const canvas = document.getElementById('mixedChart');
+  if (!canvas || !userId) return;
+
+  const ctx = canvas.getContext('2d');
+
+  const [sRes, wRes, bRes] = await Promise.all([
+    db.from('strength_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
+    db.from('walk_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
+    db.from('body_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true })
+  ]);
+
+  const strengthLogs = sRes.data || [];
+  const walkLogs = wRes.data || [];
+  const bodyLogs = bRes.data || [];
+
+  const graphMap = {};
+
+  function dateKey(log) {
+    const raw = log.logged_at || log.created_at;
+    if (!raw) return null;
+    return new Date(raw).toISOString().slice(0, 10);
+  }
+
+  function ensureDay(key) {
+    if (!key) return;
+    if (!graphMap[key]) {
+      graphMap[key] = {
+        label: key.slice(5),
+        bodyWeight: null,
+        strength: 0,
+        walk: 0,
+        moodDiffTotal: 0,
+        moodDiffCount: 0
+      };
+    }
+  }
+
+  bodyLogs.forEach(log => {
+    const key = dateKey(log);
+    ensureDay(key);
+    if (key) graphMap[key].bodyWeight = Number(log.weight_kg);
+  });
+
+  strengthLogs.forEach(log => {
+    const key = dateKey(log);
+    ensureDay(key);
+
+    if (key) {
+      const volume =
+        Number(log.weight_kg || 0) *
+        Number(log.reps || 0) *
+        Number(log.sets || 0);
+
+      graphMap[key].strength += volume;
+
+      const before = Number(log.mood_before);
+      const after = Number(log.mood_after);
+
+      if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
+        graphMap[key].moodDiffTotal += after - before;
+        graphMap[key].moodDiffCount += 1;
+      }
+    }
+  });
+
+  walkLogs.forEach(log => {
+    const key = dateKey(log);
+    ensureDay(key);
+
+    if (key) {
+      graphMap[key].walk += Number(log.distance_km || 0);
+
+      const before = Number(log.mood_before);
+      const after = Number(log.mood_after);
+
+      if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
+        graphMap[key].moodDiffTotal += after - before;
+        graphMap[key].moodDiffCount += 1;
+      }
+    }
+  });
+
+  const rows = Object.keys(graphMap)
+    .sort()
+    .map(key => graphMap[key]);
+
+  const graph = {
+    labels: rows.map(r => r.label),
+    bodyWeight: rows.map(r => r.bodyWeight),
+    strength: rows.map(r => r.strength),
+    walk: rows.map(r => r.walk),
+    moodDiff: rows.map(r =>
+      r.moodDiffCount
+        ? Number((r.moodDiffTotal / r.moodDiffCount).toFixed(2))
+        : null
+    )
+  };
+
+  if (mixedChart) {
+    mixedChart.destroy();
+  }
+
+  mixedChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: graph.labels,
@@ -1406,6 +1620,15 @@ async function initChart() {
           borderWidth: 1,
           type: 'bar',
           yAxisID: 'y1'
+        },
+        {
+          label: '気分改善量',
+          data: graph.moodDiff,
+          borderColor: '#8B6914',
+          backgroundColor: 'rgba(139,105,20,0.12)',
+          tension: 0.3,
+          spanGaps: true,
+          yAxisID: 'y2'
         }
       ]
     },
@@ -1427,6 +1650,14 @@ async function initChart() {
           position: 'right',
           grid: { drawOnChartArea: false },
           title: { display: true, text: '筋トレ量 / km' }
+        },
+        y2: {
+          type: 'linear',
+          position: 'right',
+          min: -4,
+          max: 4,
+          display: false,
+          grid: { drawOnChartArea: false }
         }
       },
       plugins: {
@@ -1434,20 +1665,6 @@ async function initChart() {
       }
     }
   });
-}
-  
-// 記録を保存したあとにグラフを更新する
-async function refreshChart() {
-  if (!mixedChart) return;
-
-  const graph = await getGraphData();
-
-  mixedChart.data.labels = graph.labels;
-  mixedChart.data.datasets[0].data = graph.bodyWeight;
-  mixedChart.data.datasets[1].data = graph.strength;
-  mixedChart.data.datasets[2].data = graph.walk;
-
-  mixedChart.update();
 }
 
 // チェックボックスで表示・非表示を切り替える
