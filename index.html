@@ -1471,21 +1471,8 @@ async function initChart() {
     }
   }
 });
-  
+
 // 記録を保存したあとにグラフを更新する
-// 記録を保存したあとにグラフを更新する
-let mixedChart;
-
-function toggleDataset(index) {
-  if (!mixedChart) return;
-
-  const ds = mixedChart.data.datasets[index];
-  if (!ds) return;
-
-  ds.hidden = !ds.hidden;
-  mixedChart.update();
-}
-
 async function refreshChart() {
   const canvas = document.getElementById('mixedChart');
   if (!canvas || !userId) return;
