@@ -446,15 +446,21 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 <script>
 // --- Supabase 初期化 ---
 const SUPABASE_URL = "https://jfdbbtvnegiqmdywtcbt.supabase.co"; 
-const SUPABASE_KEY = "sb_publishable_xnCF0lig_GYq5aw2TTzGgQ_6NRyRIyW";
+const SUPABASE_KEY = "ここに今のKEYを入れる";
 
 let db = null;
+
 try {
-  if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
-    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error("Supabase URL or KEY is empty");
+  } else if (!window.supabase) {
+    console.error("Supabase library is not loaded");
+  } else {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log("Supabase connected:", db);
   }
 } catch (e) {
-  console.warn("Supabaseの初期化に失敗しました", e);
+  console.error("Supabaseの初期化に失敗しました", e);
 }
 
 // --- 状態管理 ---
