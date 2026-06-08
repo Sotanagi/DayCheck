@@ -1475,23 +1475,11 @@ async function initChart() {
 // 記録を保存したあとにグラフを更新する
 let mixedChart;
 
-function toggleDataset(index) {
-  if (!mixedChart) return;
-
-  const isVisible = mixedChart.isDatasetVisible(index);
-
-  if (isVisible) {
-    mixedChart.hide(index);
-  } else {
-    mixedChart.show(index);
+// Supabaseの記録からグラフ用データを作る
+async function getGraphData() {
+  if (!db) {
+    return { labels: [], bodyWeight: [], strength: [], walk: [], moodDiff: [] };
   }
-}
-
-async function refreshChart() {
-  const canvas = document.getElementById('mixedChart');
-  if (!canvas || !userId) return;
-
-  const ctx = canvas.getContext('2d');
 
   const [sRes, wRes, bRes] = await Promise.all([
     db.from('strength_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
@@ -1499,90 +1487,91 @@ async function refreshChart() {
     db.from('body_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true })
   ]);
 
-  const strengthLogs = sRes.data || [];
-  const walkLogs = wRes.data || [];
-  const bodyLogs = bRes.data || [];
+  const byDate = {};
 
-  const graphMap = {};
-
-  function dateKey(log) {
-    const raw = log.logged_at || log.created_at;
-    if (!raw) return null;
-    return new Date(raw).toISOString().slice(0, 10);
-  }
-
-  function ensureDay(key) {
-    if (!key) return;
-    if (!graphMap[key]) {
-      graphMap[key] = {
-        label: key.slice(5),
-        bodyWeight: null,
+  function ensureDate(date) {
+    if (!byDate[date]) {
+      byDate[date] = {
         strength: 0,
         walk: 0,
+        bodyWeight: null,
         moodDiffTotal: 0,
         moodDiffCount: 0
       };
     }
   }
 
-  bodyLogs.forEach(log => {
-    const key = dateKey(log);
-    ensureDay(key);
-    if (key) graphMap[key].bodyWeight = Number(log.weight_kg);
+  (bRes.data || []).forEach(r => {
+    if (!r.logged_at) return;
+    const date = r.logged_at.split('T')[0];
+    ensureDate(date);
+    byDate[date].bodyWeight = Number(r.weight_kg) || null;
   });
 
-  strengthLogs.forEach(log => {
-    const key = dateKey(log);
-    ensureDay(key);
+  (sRes.data || []).forEach(r => {
+    if (!r.logged_at) return;
+    const date = r.logged_at.split('T')[0];
+    ensureDate(date);
 
-    if (key) {
-      const volume =
-        Number(log.weight_kg || 0) *
-        Number(log.reps || 0) *
-        Number(log.sets || 0);
+    const volume =
+      (Number(r.weight_kg) || 0) *
+      (Number(r.reps) || 0) *
+      (Number(r.sets) || 1);
 
-      graphMap[key].strength += volume;
+    byDate[date].strength += volume;
 
-      const before = Number(log.mood_before);
-      const after = Number(log.mood_after);
+    const before = Number(r.mood_before);
+    const after = Number(r.mood_after);
 
-      if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
-        graphMap[key].moodDiffTotal += after - before;
-        graphMap[key].moodDiffCount += 1;
-      }
+    if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
+      byDate[date].moodDiffTotal += after - before;
+      byDate[date].moodDiffCount += 1;
     }
   });
 
-  walkLogs.forEach(log => {
-    const key = dateKey(log);
-    ensureDay(key);
+  (wRes.data || []).forEach(r => {
+    if (!r.logged_at) return;
+    const date = r.logged_at.split('T')[0];
+    ensureDate(date);
 
-    if (key) {
-      graphMap[key].walk += Number(log.distance_km || 0);
+    byDate[date].walk += Number(r.distance_km) || 0;
 
-      const before = Number(log.mood_before);
-      const after = Number(log.mood_after);
+    const before = Number(r.mood_before);
+    const after = Number(r.mood_after);
 
-      if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
-        graphMap[key].moodDiffTotal += after - before;
-        graphMap[key].moodDiffCount += 1;
-      }
+    if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
+      byDate[date].moodDiffTotal += after - before;
+      byDate[date].moodDiffCount += 1;
     }
   });
 
-  const rows = Object.keys(graphMap).sort().map(key => graphMap[key]);
+  const dates = Object.keys(byDate).sort();
 
-  const graph = {
-    labels: rows.map(r => r.label),
-    bodyWeight: rows.map(r => r.bodyWeight),
-    strength: rows.map(r => r.strength),
-    walk: rows.map(r => r.walk),
-    moodDiff: rows.map(r =>
-      r.moodDiffCount
-        ? Number((r.moodDiffTotal / r.moodDiffCount).toFixed(2))
+  return {
+    labels: dates.map(d => {
+      const parts = d.split('-');
+      return `${Number(parts[1])}/${Number(parts[2])}`;
+    }),
+    bodyWeight: dates.map(d => byDate[d].bodyWeight),
+    strength: dates.map(d => Math.round(byDate[d].strength || 0)),
+    walk: dates.map(d => Math.round((byDate[d].walk || 0) * 10) / 10),
+    moodDiff: dates.map(d =>
+      byDate[d].moodDiffCount
+        ? Number((byDate[d].moodDiffTotal / byDate[d].moodDiffCount).toFixed(2))
         : null
     )
   };
+}
+
+// グラフの初期化・更新
+async function initChart() {
+  const canvas = document.getElementById('mixedChart');
+  if (!canvas || !window.Chart) return;
+
+  canvas.parentElement.style.height = '260px';
+
+  const ctx = canvas.getContext('2d');
+  const graph = await getGraphData();
 
   if (mixedChart) {
     mixedChart.destroy();
@@ -1664,6 +1653,23 @@ async function refreshChart() {
       }
     }
   });
+}
+
+async function refreshChart() {
+  await initChart();
+}
+
+// チェックボックスで表示・非表示を切り替える
+function toggleDataset(index) {
+  if (!mixedChart) return;
+
+  const isVisible = mixedChart.isDatasetVisible(index);
+
+  if (isVisible) {
+    mixedChart.hide(index);
+  } else {
+    mixedChart.show(index);
+  }
 }
 </script>
 </body>
