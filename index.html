@@ -1666,21 +1666,6 @@ function toggleDataset(index) {
     mixedChart.show(index);
   }
 }
-
-// データセットの表示・非表示切り替え（自律性のための機能）
-function toggleDataset(index) {
-  if (!mixedChart) return;
-
-  const isVisible = mixedChart.isDatasetVisible(index);
-  if (isVisible) {
-    mixedChart.hide(index);
-  } else {
-    mixedChart.show(index);
-  }
-}
-
-// 起動時処理（既存の即時実行関数の中に追加）
-// (async () => { ... initChart(); ... })();
 </script>
 </body>
 </html>
