@@ -123,6 +123,21 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(55px);background:var(--text);color:var(--card);padding:10px 18px;border-radius:12px;font-size:13px;opacity:0;transition:transform .3s,opacity .3s; z-index:999;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.animal-profile {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.animal-main {
+  font-size: 48px;
+  margin: 10px 0;
+}
+
+.ecosystem-view {
+  font-size: 28px;
+  line-height: 1.8;
+  letter-spacing: 4px;
+}
 </style>
 </head>
 <body>
@@ -139,26 +154,68 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
   <button id="nt-hist" onclick="showScreen('hist')">履歴</button>
 </nav>
 
+
 <div id="home" class="screen show">
   <div class="hero-card">
     <div class="hero-greet" id="heroGreet">おはようございます 👋</div>
     <div class="hero-title">前回の<em>自分を超えよう</em></div>
     <div class="hero-sub" id="heroSub">記録を読み込み中...</div>
-　　<div id="graphContainer" style="margin-top:20px; background: rgba(255,255,255,0.5); padding:15px; border-radius:15px;">
-  <canvas id="mixedChart"></canvas>
-  
-  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;" id="chartControls">
-    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-      <input type="checkbox" checked onchange="toggleDataset(0)"> 体重
-    </label>
-    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-      <input type="checkbox" checked onchange="toggleDataset(1)"> 筋トレ(RM)
-    </label>
-    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-      <input type="checkbox" checked onchange="toggleDataset(2)"> ウォーキング
-    </label>
+
+    <div id="graphContainer" style="margin-top:20px; background: rgba(255,255,255,0.5); padding:15px; border-radius:15px;">
+      <canvas id="mixedChart"></canvas>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;" id="chartControls">
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked onchange="toggleDataset(0)"> 体重
+        </label>
+
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked onchange="toggleDataset(1)"> 筋トレ
+        </label>
+
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked onchange="toggleDataset(2)"> ウォーク
+        </label>
+
+        <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked onchange="toggleDataset(3)"> 気分改善
+        </label>
+      </div>
+    </div>
   </div>
-</div>
+
+  <div class="card">
+    <h2>あなたの運動タイプ</h2>
+    <div id="animalProfile" class="animal-profile">
+      まだデータがありません
+    </div>
+
+    <h2 style="margin-top:16px;">あなたの生態系</h2>
+    <div id="ecosystemView" class="ecosystem-view">
+      🌱
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>今週の気分変化</h2>
+
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; text-align:center; margin-top:12px;">
+      <div>
+        <div style="font-size:11px; color:var(--muted);">運動前</div>
+        <div id="moodBeforeAvg" style="font-size:28px; font-weight:800; color:var(--text);">--</div>
+      </div>
+
+      <div style="font-size:24px; color:var(--accent);">→</div>
+
+      <div>
+        <div style="font-size:11px; color:var(--muted);">運動後</div>
+        <div id="moodAfterAvg" style="font-size:28px; font-weight:800; color:var(--accent);">--</div>
+      </div>
+    </div>
+
+    <div id="moodDiffText" style="text-align:center; margin-top:10px; font-size:13px; font-weight:700; color:var(--accent);">
+      記録すると表示されます
+    </div>
   </div>
 
   <div class="feed" style="padding:16px;text-align:center;">
@@ -174,13 +231,28 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
     <div id="aiPlanResult"></div>
   </div>
 
+  <div class="card">
+    <div class="card-label">今日の体重（任意）</div>
+    <div class="input-row" style="grid-template-columns:1fr auto;">
+      <div class="input-group">
+        <input class="inp" type="number" id="inBodyWeight" step="0.1" placeholder="例：70.5">
+      </div>
+      <button class="save-btn" style="width:auto; padding:10px 14px;" onclick="saveBodyWeightOnly()">保存</button>
+    </div>
+  </div>
+
   <div>
     <div class="sec-label">自己ベスト</div>
-    <div class="pr-scroll" id="prScroll"><div style="color:var(--muted);font-size:13px;">読み込み中...</div></div>
+    <div class="pr-scroll" id="prScroll">
+      <div style="color:var(--muted);font-size:13px;">読み込み中...</div>
+    </div>
   </div>
+
   <div>
     <div class="sec-label">最近の活動</div>
-    <div class="feed" id="recentFeed"><div class="feed-empty">記録がありません</div></div>
+    <div class="feed" id="recentFeed">
+      <div class="feed-empty">記録がありません</div>
+    </div>
   </div>
 </div>
 
@@ -203,11 +275,13 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
         <button class="muscle-btn" onclick="pickMuscle('体幹')"><span class="mb-icon">⚡</span><span class="mb-name">体幹</span></button>
       </div>
     </div>
+
     <div class="wizard-step" id="ws1">
       <button class="back-btn" onclick="goWS(0)">← 戻る</button>
       <div class="card-label" id="ws1Label">種目を選ぶ</div>
       <div class="ex-list" id="exList"></div>
     </div>
+
     <div class="wizard-step" id="ws2">
       <button class="back-btn" onclick="goWS(1)">← 戻る</button>
       <div class="card-label" id="ws2Label"></div>
@@ -218,11 +292,38 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
         </div>
         <div style="font-size:26px;">✨</div>
       </div>
+
       <div class="input-row">
         <div class="input-group"><label>重量 kg</label><input class="inp" type="number" id="inW"></div>
         <div class="input-group"><label>回数</label><input class="inp" type="number" id="inR"></div>
         <div class="input-group"><label>セット</label><input class="inp" type="number" id="inS"></div>
       </div>
+
+      <div class="mood-row">
+        <div class="input-group">
+          <label>運動前の気分</label>
+          <select class="inp mood-select" id="strengthMoodBefore">
+            <option value="">選択しない</option>
+            <option value="1">😞 1</option>
+            <option value="2">🙁 2</option>
+            <option value="3">😐 3</option>
+            <option value="4">🙂 4</option>
+            <option value="5">😄 5</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>運動後の気分</label>
+          <select class="inp mood-select" id="strengthMoodAfter">
+            <option value="">選択しない</option>
+            <option value="1">😞 1</option>
+            <option value="2">🙁 2</option>
+            <option value="3">😐 3</option>
+            <option value="4">🙂 4</option>
+            <option value="5">😄 5</option>
+          </select>
+        </div>
+      </div>
+
       <button class="save-btn" onclick="saveStrength()">記録する</button>
     </div>
   </div>
@@ -232,16 +333,74 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
       <div class="input-group"><label>距離 km</label><input class="inp" type="number" id="wDist"></div>
       <div class="input-group"><label>時間 分</label><input class="inp" type="number" id="wTime"></div>
     </div>
+
+    <div class="mood-row">
+      <div class="input-group">
+        <label>運動前の気分</label>
+        <select class="inp mood-select" id="walkMoodBefore">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>運動後の気分</label>
+        <select class="inp mood-select" id="walkMoodAfter">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+    </div>
+
     <button class="save-btn" onclick="saveWalk()">記録する</button>
   </div>
 
   <div id="oPanel" style="display:none;">
-    <div class="input-group" style="margin-bottom:10px;"><label>活動名</label><input class="inp inp-txt" type="text" id="oAct" placeholder="例：ヨガ、水泳、掃除"></div>
-    <div class="input-group" style="margin-bottom:10px;"><label>詳細（時間や感想など）</label><input class="inp inp-txt" type="text" id="oDet" placeholder="30分頑張った！"></div>
+    <div class="input-group" style="margin-bottom:10px;">
+      <label>活動名</label>
+      <input class="inp inp-txt" type="text" id="oAct" placeholder="例：ヨガ、水泳、掃除">
+    </div>
+
+    <div class="input-group" style="margin-bottom:10px;">
+      <label>詳細（時間や感想など）</label>
+      <input class="inp inp-txt" type="text" id="oDet" placeholder="30分頑張った！">
+    </div>
+
+    <div class="mood-row">
+      <div class="input-group">
+        <label>運動前の気分</label>
+        <select class="inp mood-select" id="otherMoodBefore">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>運動後の気分</label>
+        <select class="inp mood-select" id="otherMoodAfter">
+          <option value="">選択しない</option>
+          <option value="1">😞 1</option>
+          <option value="2">🙁 2</option>
+          <option value="3">😐 3</option>
+          <option value="4">🙂 4</option>
+          <option value="5">😄 5</option>
+        </select>
+      </div>
+    </div>
+
     <button class="save-btn" onclick="saveOther()">記録する</button>
   </div>
 </div>
-
 <div id="chat" class="screen">
   <div class="chat-topbar">
     <div>
@@ -283,7 +442,7 @@ nav button.active::after{content:'';position:absolute;bottom:-1px;left:50%;trans
 
 <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
 <script>
 // --- Supabase 初期化 ---
 const SUPABASE_URL = "https://jfdbbtvnegiqmdywtcbt.supabase.co"; 
@@ -299,32 +458,56 @@ try {
 }
 
 // --- 状態管理 ---
-let userId = localStorage.getItem("uid") || (() => { const id = crypto.randomUUID(); localStorage.setItem("uid",id); return id; })();
+let userId = localStorage.getItem("uid") || (() => {
+  const id = crypto.randomUUID();
+  localStorage.setItem("uid", id);
+  return id;
+})();
 let displayName = localStorage.getItem("displayName") || "ゲスト";
 let myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
 let currentGroupId = myGroups.length > 0 ? myGroups[0].id : null;
 
-let pBests = {}, walkBest = null;
-let curMuscle = "", curExercise = "", chatSub = null;
+let pBests = {};
+let walkBest = null;
+let curMuscle = "";
+let curExercise = "";
+let chatSub = null;
+let mixedChart = null;
 
 const EX = {
-  '胸':  ['ベンチプレス','ダンベルフライ','プッシュアップ'],
+  '胸': ['ベンチプレス','ダンベルフライ','プッシュアップ'],
   '背中': ['デッドリフト','ラットプルダウン','ベントオーバーロウ'],
-  '脚':  ['スクワット','レッグプレス','ランジ'],
-  '肩':  ['ショルダープレス','サイドレイズ','フロントレイズ'],
-  '腕':  ['バーベルカール','トライセップスプレスダウン'],
-  '体幹': ['プランク','クランチ','レッグレイズ'],
+  '脚': ['スクワット','レッグプレス','ランジ'],
+  '肩': ['ショルダープレス','サイドレイズ','フロントレイズ'],
+  '腕': ['バーベルカール','トライセップスプレスダウン'],
+  '体幹': ['プランク','クランチ','レッグレイズ']
+};
+
+const ANIMAL_TYPES = {
+  wolf: { name: "狼", emoji: "🐺", label: "高強度筋トレ型", desc: "短時間でも強度高く追い込むタイプ" },
+  gorilla: { name: "ゴリラ", emoji: "🦍", label: "筋力特化型", desc: "筋トレ中心でパワーを伸ばすタイプ" },
+  buffalo: { name: "バッファロー", emoji: "🦬", label: "重量挑戦型", desc: "重さや自己ベスト更新を重視するタイプ" },
+  bear: { name: "熊", emoji: "🐻", label: "バランス型", desc: "筋トレも有酸素もバランスよく行うタイプ" },
+  deer: { name: "鹿", emoji: "🦌", label: "ランニング型", desc: "走る・歩くなど有酸素中心のタイプ" },
+  horse: { name: "馬", emoji: "🐎", label: "持久力型", desc: "長時間コツコツ続けるタイプ" },
+  dog: { name: "犬", emoji: "🐕", label: "散歩習慣型", desc: "無理なく日常に運動を入れるタイプ" },
+  rabbit: { name: "うさぎ", emoji: "🐇", label: "短時間集中型", desc: "短い時間でもこまめに動くタイプ" },
+  monkey: { name: "猿", emoji: "🐒", label: "チャレンジ型", desc: "色々な運動に挑戦するタイプ" },
+  dolphin: { name: "イルカ", emoji: "🐬", label: "楽しさ重視型", desc: "楽しい運動なら続けられるタイプ" },
+  otter: { name: "カワウソ", emoji: "🦦", label: "ゆる継続型", desc: "気楽に楽しく続けるタイプ" },
+  swan: { name: "白鳥", emoji: "🦢", label: "整える運動型", desc: "ストレッチやヨガなど体を整えるタイプ" },
+  squirrel: { name: "リス", emoji: "🐿️", label: "日常活動型", desc: "小さな運動を積み重ねるタイプ" },
+  cheetah: { name: "チーター", emoji: "🐆", label: "スピード型", desc: "短距離・高強度・瞬発力タイプ" },
+  turtle: { name: "亀", emoji: "🐢", label: "マイペース型", desc: "遅くても着実に継続するタイプ" },
+  eagle: { name: "鷹", emoji: "🦅", label: "目標達成型", desc: "明確な目標に向かって努力するタイプ" }
 };
 
 let customExercises = JSON.parse(localStorage.getItem('customExercises') || '{}');
 
 Object.keys(customExercises).forEach(muscle => {
   if (!EX[muscle]) EX[muscle] = [];
-
   customExercises[muscle].forEach(ex => {
-    if (!EX[muscle].includes(ex)) {
-      EX[muscle].push(ex);
-    }
+    if (!EX[muscle].includes(ex)) EX[muscle].push(ex);
   });
 });
 
@@ -338,109 +521,151 @@ function escapeHTML(text) {
   }[c]));
 }
 
-const MICON = {'胸':'🫁','背中':'🏋️','脚':'🦵','肩':'🤸','腕':'💪','体幹':'⚡'};
-
-// --- 起動時処理 ---
-(async () => {
-  setGreeting();
-  updateGroupSelect();
-
-  await Promise.all([loadPBests(), loadWalkBest()]);
-  renderHome();
-  calcStreak();
-
-  await initChart();
-
-  if (currentGroupId) loadChat();
-})();
-
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('show');
-  document.getElementById('nt-' + id).classList.add('active');
+
+  const screen = document.getElementById(id);
+  const nav = document.getElementById('nt-' + id);
+
+  if (screen) screen.classList.add('show');
+  if (nav) nav.classList.add('active');
+
   if (id === 'hist') loadHistory();
+  if (id === 'chat') loadChat();
 }
 
 function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'show';
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'show';
   setTimeout(() => t.className = '', 3000);
 }
+
 function setGreeting() {
   const h = new Date().getHours();
-  document.getElementById('heroGreet').textContent = h < 12 ? 'おはようございます 🌅' : h < 18 ? 'こんにちは ☀️' : 'こんばんは 🌙';
+  const el = document.getElementById('heroGreet');
+  if (!el) return;
+  el.textContent = h < 12 ? 'おはようございます 🌅' : h < 18 ? 'こんにちは ☀️' : 'こんばんは 🌙';
 }
 
-// --- グループ・名前管理 ---
-function openNameModal() { document.getElementById('nameInp').value = displayName; document.getElementById('nameModal').classList.add('show'); }
+function openNameModal() {
+  document.getElementById('nameInp').value = displayName;
+  document.getElementById('nameModal').classList.add('show');
+}
+
 function saveName() {
   displayName = document.getElementById('nameInp').value.trim() || 'ゲスト';
   localStorage.setItem('displayName', displayName);
   document.getElementById('nameModal').classList.remove('show');
   toast('名前を保存しました');
 }
-function openGroupModal() { document.getElementById('groupModal').classList.add('show'); }
+
+function openGroupModal() {
+  document.getElementById('groupModal').classList.add('show');
+}
+
 function joinGroup() {
   const name = document.getElementById('grpNameInp').value.trim();
   const id = document.getElementById('grpIdInp').value.trim();
-  if(!name || !id) return toast('両方入力してください');
-  
-  if(!myGroups.find(g => g.id === id)) {
-    myGroups.push({id, name});
+  if (!name || !id) return toast('両方入力してください');
+
+  if (!myGroups.find(g => g.id === id)) {
+    myGroups.push({ id, name });
     localStorage.setItem('myGroups', JSON.stringify(myGroups));
   }
+
   currentGroupId = id;
   updateGroupSelect();
   document.getElementById('groupModal').classList.remove('show');
   loadChat();
   toast('グループに参加しました');
 }
+
 function changeGroup() {
   currentGroupId = document.getElementById('grpSelect').value;
   loadChat();
 }
+
 function updateGroupSelect() {
   const sel = document.getElementById('grpSelect');
-  if(myGroups.length === 0) sel.innerHTML = '<option value="">未参加</option>';
-  else sel.innerHTML = myGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-  sel.value = currentGroupId;
+  if (!sel) return;
+
+  if (myGroups.length === 0) {
+    sel.innerHTML = '<option value="">未参加</option>';
+  } else {
+    sel.innerHTML = myGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  }
+
+  sel.value = currentGroupId || '';
 }
 
-// --- 記録ロード＆保存 ---
 async function loadPBests() {
+  if (!db) return;
+
   const { data } = await db.from('strength_logs').select('*').eq('user_id', userId);
   pBests = {};
+
   (data || []).forEach(r => {
-    if (!pBests[r.exercise] || r.weight_kg > pBests[r.exercise].maxWeight) {
-      pBests[r.exercise] = { maxWeight: r.weight_kg, reps: r.reps, sets: r.sets };
+    if (!pBests[r.exercise] || Number(r.weight_kg) > Number(pBests[r.exercise].maxWeight)) {
+      pBests[r.exercise] = {
+        maxWeight: Number(r.weight_kg),
+        reps: r.reps,
+        sets: r.sets
+      };
     }
   });
 }
+
 async function loadWalkBest() {
+  if (!db) return;
+
   const { data } = await db.from('walk_logs').select('*').eq('user_id', userId);
   if (data && data.length) {
-    walkBest = { distance_km: Math.max(...data.map(r => r.distance_km)) };
+    walkBest = { distance_km: Math.max(...data.map(r => Number(r.distance_km) || 0)) };
   }
 }
+
 function renderHome() {
   const scroll = document.getElementById('prScroll');
+  if (!scroll) return;
+
   let cards = [];
-  if (walkBest) cards.push(`<div class="pr-card gold"><div class="pr-exname">🚶 ウォーク</div><div class="pr-val">${walkBest.distance_km} km</div></div>`);
-  Object.entries(pBests).forEach(([ex, b]) => cards.push(`<div class="pr-card"><div class="pr-exname">${ex}</div><div class="pr-val">${b.maxWeight} kg</div></div>`));
+
+  if (walkBest) {
+    cards.push(`<div class="pr-card gold"><div class="pr-exname">🚶 最長ウォーク</div><div class="pr-val">${walkBest.distance_km} km</div></div>`);
+  }
+
+  Object.entries(pBests).forEach(([ex, b]) => {
+    cards.push(`<div class="pr-card"><div class="pr-exname">${escapeHTML(ex)} 最高重量</div><div class="pr-val">${b.maxWeight} kg</div></div>`);
+  });
+
   scroll.innerHTML = cards.length ? cards.join('') : '<div style="font-size:12px;color:gray;">記録なし</div>';
 }
 
 function switchLog(tab) {
   ['s','w','o'].forEach(t => {
-    document.getElementById(`tab-${t}`).classList.remove('active');
-    document.getElementById(`${t}Panel`).style.display = 'none';
+    const tabEl = document.getElementById(`tab-${t}`);
+    const panelEl = document.getElementById(`${t}Panel`);
+    if (tabEl) tabEl.classList.remove('active');
+    if (panelEl) panelEl.style.display = 'none';
   });
-  document.getElementById(`tab-${tab[0]}`).classList.add('active');
-  document.getElementById(`${tab[0]}Panel`).style.display = 'block';
+
+  const key = tab[0];
+  const activeTab = document.getElementById(`tab-${key}`);
+  const activePanel = document.getElementById(`${key}Panel`);
+
+  if (activeTab) activeTab.classList.add('active');
+  if (activePanel) activePanel.style.display = 'block';
 }
 
-function goWS(n) { document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active')); document.getElementById('ws'+n).classList.add('active'); }
+function goWS(n) {
+  document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('ws' + n);
+  if (target) target.classList.add('active');
+}
+
 function pickMuscle(m) {
   curMuscle = m;
   renderExerciseList();
@@ -448,7 +673,11 @@ function pickMuscle(m) {
 }
 
 function renderExerciseList() {
-  document.getElementById('ws1Label').textContent = curMuscle + 'の種目を選ぶ';
+  const label = document.getElementById('ws1Label');
+  const listEl = document.getElementById('exList');
+  if (!label || !listEl) return;
+
+  label.textContent = curMuscle + 'の種目を選ぶ';
 
   const list = EX[curMuscle] || [];
 
@@ -468,7 +697,7 @@ function renderExerciseList() {
     `;
   }).join('');
 
-  document.getElementById('exList').innerHTML = `
+  listEl.innerHTML = `
     ${exerciseButtons}
 
     <div class="ex-item" style="display:block; cursor:default;">
@@ -483,20 +712,17 @@ function renderExerciseList() {
 
 function addCustomExercise() {
   const inp = document.getElementById('newExInp');
-  const name = inp.value.trim();
+  const name = inp ? inp.value.trim() : '';
 
   if (!name) return toast('種目名を入力してください');
 
   if (!EX[curMuscle]) EX[curMuscle] = [];
   if (!customExercises[curMuscle]) customExercises[curMuscle] = [];
 
-  if (EX[curMuscle].includes(name)) {
-    return toast('その種目はすでにあります');
-  }
+  if (EX[curMuscle].includes(name)) return toast('その種目はすでにあります');
 
   EX[curMuscle].push(name);
   customExercises[curMuscle].push(name);
-
   localStorage.setItem('customExercises', JSON.stringify(customExercises));
 
   inp.value = '';
@@ -505,80 +731,326 @@ function addCustomExercise() {
 }
 
 function pickExercise(ex) {
-  curExercise = ex; document.getElementById('ws2Label').textContent = ex;
-  document.getElementById('sPrevVal').textContent = pBests[ex] ? `${pBests[ex].maxWeight}kg` : '記録なし';
+  curExercise = ex;
+
+  const label = document.getElementById('ws2Label');
+  const prev = document.getElementById('sPrevVal');
+
+  if (label) label.textContent = ex;
+  if (prev) prev.textContent = pBests[ex] ? `${pBests[ex].maxWeight}kg` : '記録なし';
+
   goWS(2);
 }
 
-async function saveStrength() {
-  const w=document.getElementById('inW').value, r=document.getElementById('inR').value, s=document.getElementById('inS').value;
-  if(!w||!r||!s) return toast('数値を入力してください');
-  await db.from('strength_logs').insert({user_id:userId, muscle_group:curMuscle, exercise:curExercise, weight_kg:w, reps:r, sets:s});
-  afterSave();
-}
-async function saveWalk() {
-  const d=document.getElementById('wDist').value, t=document.getElementById('wTime').value;
-  if(!d||!t) return toast('数値を入力してください');
-  await db.from('walk_logs').insert({user_id:userId, distance_km:d, duration_min:t});
-  afterSave();
-}
-async function saveOther() {
-  const a=document.getElementById('oAct').value, d=document.getElementById('oDet').value;
-  if(!a) return toast('活動名を入力してください');
-  await db.from('other_logs').insert({user_id:userId, activity_name:a, details:d});
-  afterSave();
-}
-async function afterSave() {
-  toast('記録しました！');
+async function saveBodyWeight() {
+  const bw = Number(document.getElementById('inBodyWeight').value);
+  if (!bw || !db) return;
 
+  await db.from('body_logs').insert({
+    user_id: userId,
+    weight_kg: bw
+  });
+}
+
+async function saveBodyWeightOnly() {
+  await saveBodyWeight();
+  toast('体重を保存しました');
+  await refreshChart();
+}
+
+async function saveStrength() {
+  if (!db) return toast('Supabaseが未設定です');
+
+  const w = Number(document.getElementById('inW').value);
+  const r = Number(document.getElementById('inR').value);
+  const s = Number(document.getElementById('inS').value);
+
+  const moodBeforeRaw = document.getElementById('strengthMoodBefore')?.value;
+  const moodAfterRaw = document.getElementById('strengthMoodAfter')?.value;
+
+  const mood_before = moodBeforeRaw ? Number(moodBeforeRaw) : null;
+  const mood_after = moodAfterRaw ? Number(moodAfterRaw) : null;
+
+  if (!w || !r || !s) return toast('数値を入力してください');
+
+  const volume = w * r * s;
+  const xp = Math.floor(volume / 100);
+
+  await db.from('strength_logs').insert({
+    user_id: userId,
+    muscle_group: curMuscle,
+    exercise: curExercise,
+    weight_kg: w,
+    reps: r,
+    sets: s,
+    mood_before,
+    mood_after
+  });
+
+  toast(`記録しました！ +${xp}XP`);
+  await afterSave();
+}
+
+async function saveWalk() {
+  if (!db) return toast('Supabaseが未設定です');
+
+  const d = Number(document.getElementById('wDist').value);
+  const t = Number(document.getElementById('wTime').value);
+
+  const moodBeforeRaw = document.getElementById('walkMoodBefore')?.value;
+  const moodAfterRaw = document.getElementById('walkMoodAfter')?.value;
+
+  const mood_before = moodBeforeRaw ? Number(moodBeforeRaw) : null;
+  const mood_after = moodAfterRaw ? Number(moodAfterRaw) : null;
+
+  if (!d || !t) return toast('数値を入力してください');
+
+  await db.from('walk_logs').insert({
+    user_id: userId,
+    distance_km: d,
+    duration_min: t,
+    mood_before,
+    mood_after
+  });
+
+  await afterSave();
+}
+
+async function saveOther() {
+  if (!db) return toast('Supabaseが未設定です');
+
+  const a = document.getElementById('oAct').value.trim();
+
+  const moodBeforeRaw = document.getElementById('otherMoodBefore')?.value;
+  const moodAfterRaw = document.getElementById('otherMoodAfter')?.value;
+
+  const mood_before = moodBeforeRaw ? Number(moodBeforeRaw) : null;
+  const mood_after = moodAfterRaw ? Number(moodAfterRaw) : null;
+
+  if (!a) return toast('活動名を入力してください');
+
+  await db.from('activity_logs').insert({
+    user_id: userId,
+    activity_type: a,
+    duration_minutes: null,
+    ap_points: 1,
+    mood_before,
+    mood_after
+  });
+
+  await afterSave();
+}
+
+function resetMoodInputs() {
+  const ids = [
+    'strengthMoodBefore',
+    'strengthMoodAfter',
+    'walkMoodBefore',
+    'walkMoodAfter',
+    'otherMoodBefore',
+    'otherMoodAfter'
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+async function updateMoodSummary() {
+  if (!db || !userId) return;
+
+  const now = new Date();
+  const day = now.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const start = new Date(now);
+  start.setDate(now.getDate() + diffToMonday);
+  start.setHours(0, 0, 0, 0);
+
+  const fromDate = start.toISOString();
+
+  const [sRes, wRes, oRes] = await Promise.all([
+    db.from('strength_logs')
+      .select('mood_before, mood_after, logged_at')
+      .eq('user_id', userId)
+      .gte('logged_at', fromDate),
+
+    db.from('walk_logs')
+      .select('mood_before, mood_after, logged_at')
+      .eq('user_id', userId)
+      .gte('logged_at', fromDate),
+
+    db.from('activity_logs')
+      .select('mood_before, mood_after')
+      .eq('user_id', userId)
+  ]);
+
+  const logs = [
+    ...(sRes.data || []),
+    ...(wRes.data || []),
+    ...(oRes.data || [])
+  ];
+
+  const beforeValues = logs
+    .map(log => Number(log.mood_before))
+    .filter(v => v >= 1 && v <= 5);
+
+  const afterValues = logs
+    .map(log => Number(log.mood_after))
+    .filter(v => v >= 1 && v <= 5);
+
+  const beforeEl = document.getElementById('moodBeforeAvg');
+  const afterEl = document.getElementById('moodAfterAvg');
+  const diffEl = document.getElementById('moodDiffText');
+
+  if (!beforeEl || !afterEl || !diffEl) return;
+
+  if (!beforeValues.length || !afterValues.length) {
+    beforeEl.textContent = '--';
+    afterEl.textContent = '--';
+    diffEl.textContent = '記録すると表示されます';
+    return;
+  }
+
+  const beforeAvg = beforeValues.reduce((sum, v) => sum + v, 0) / beforeValues.length;
+  const afterAvg = afterValues.reduce((sum, v) => sum + v, 0) / afterValues.length;
+  const diff = afterAvg - beforeAvg;
+
+  beforeEl.textContent = beforeAvg.toFixed(1);
+  afterEl.textContent = afterAvg.toFixed(1);
+
+  if (diff > 0) {
+    diffEl.textContent = `今週の気分は +${diff.toFixed(1)} 改善しています`;
+  } else if (diff < 0) {
+    diffEl.textContent = `今週の気分は ${diff.toFixed(1)} 下がっています`;
+  } else {
+    diffEl.textContent = '今週の気分は変化なしです';
+  }
+}
+
+async function afterSave() {
   await Promise.all([loadPBests(), loadWalkBest()]);
   renderHome();
   calcStreak();
 
   await refreshChart();
 
+  try {
+    await updateMoodSummary();
+  } catch (e) {
+    console.error("Mood summary error:", e);
+  }
+
+  try {
+    await updateAnimalProfile();
+  } catch (e) {
+    console.error("Animal profile error:", e);
+  }
+
+  resetMoodInputs();
   showScreen('home');
- await shareStreakToGroup();
+  await shareStreakToGroup();
 }
 
-// --- 履歴表示 ---
 async function loadHistory() {
-  const [s,w,o] = await Promise.all([
-    db.from('strength_logs').select('*').eq('user_id',userId),
-    db.from('walk_logs').select('*').eq('user_id',userId),
-    db.from('other_logs').select('*').eq('user_id',userId)
+  if (!db) return;
+
+  const [s, w, o] = await Promise.all([
+    db.from('strength_logs').select('*').eq('user_id', userId),
+    db.from('walk_logs').select('*').eq('user_id', userId),
+    db.from('activity_logs').select('*').eq('user_id', userId)
   ]);
-  let items = [...(s.data||[]).map(x=>({...x, t:'💪 '+x.exercise})), ...(w.data||[]).map(x=>({...x, t:'🚶 ウォーク'})), ...(o.data||[]).map(x=>({...x, t:'✏️ '+x.activity_name}))];
-  items.sort((a,b) => new Date(b.logged_at) - new Date(a.logged_at));
-  
+
+  const items = [
+    ...(s.data || []).map(x => ({
+      t: '💪 ' + (x.exercise || '筋トレ'),
+      date: x.logged_at || x.created_at || ''
+    })),
+    ...(w.data || []).map(x => ({
+      t: '🚶 ウォーク',
+      date: x.logged_at || x.created_at || ''
+    })),
+    ...(o.data || []).map(x => ({
+      t: '✏️ ' + (x.activity_type || x.activity_name || 'その他'),
+      date: x.logged_at || x.created_at || ''
+    }))
+  ];
+
+  items.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
   const box = document.getElementById('historyFeed');
-  box.innerHTML = items.length ? items.map(i => `<div class="feed-item"><div class="fi-name">${i.t}</div><div class="fi-time" style="margin-left:auto;">${i.logged_at.split('T')[0]}</div></div>`).join('') : '<div class="feed-empty">記録なし</div>';
+  if (!box) return;
+
+  box.innerHTML = items.length
+    ? items.map(i => {
+        const dateText = i.date ? String(i.date).split('T')[0] : '';
+        return `<div class="feed-item"><div class="fi-name">${escapeHTML(i.t)}</div><div class="fi-time" style="margin-left:auto;">${dateText}</div></div>`;
+      }).join('')
+    : '<div class="feed-empty">記録なし</div>';
 }
 
-// --- Streak 自動計算 & 共有 ---
 async function calcStreak() {
-  const { data } = await db.from('strength_logs').select('logged_at').eq('user_id',userId).order('logged_at', {ascending:false});
-  // 簡易的に件数を表示（本来は日付で連続判定するが、今回はログ件数ベースの簡易版）
-  const uniqueDays = new Set((data||[]).map(d => d.logged_at.split('T')[0])).size;
-  document.getElementById('streakNum').innerText = uniqueDays + '日';
-  document.getElementById('todayChip').innerText = `✅ 累計 ${uniqueDays}日`;
+  if (!db) return;
+
+  const { data } = await db
+    .from('strength_logs')
+    .select('logged_at')
+    .eq('user_id', userId)
+    .order('logged_at', { ascending: false });
+
+  const uniqueDays = new Set((data || []).map(d => String(d.logged_at).split('T')[0])).size;
+
+  const streakEl = document.getElementById('streakNum');
+  const chipEl = document.getElementById('todayChip');
+
+  if (streakEl) streakEl.innerText = uniqueDays + '日';
+  if (chipEl) chipEl.innerText = `✅ 累計 ${uniqueDays}日`;
 }
 
 async function shareStreakToGroup() {
-  const strk = document.getElementById('streakNum').innerText;
-  const streakGrp = myGroups.find(g => g.id === 'streak');
-  if(streakGrp && strk !== '0日') {
-    await db.from('chat_messages').insert({ group_id: 'streak', user_id: userId, user_name: displayName, message: `🎉 今日の記録完了！連続記録: ${strk} 🔥`});
+  if (!db) return;
+
+  const strkText = document.getElementById('streakNum')?.textContent || '0日';
+  const streak = parseInt(strkText, 10);
+
+  if (!streak || streak <= 0) return;
+  if (streak % 5 !== 0) return;
+
+  const lastShared = localStorage.getItem('lastSharedStreakAllGroups');
+  if (String(lastShared) === String(streak)) return;
+  if (!myGroups || myGroups.length === 0) return;
+
+  for (const grp of myGroups) {
+    await db.from('chat_messages').insert({
+      group_id: grp.id,
+      user_id: userId,
+      display_name: displayName || 'ゲスト',
+      message: `🔥 ${displayName || 'ゲスト'}さんが${streak}日継続を達成しました！みんなで応援しましょう🎉`,
+      message_type: 'streak',
+      streak_days: streak,
+      reactions: {
+        fire: 0,
+        clap: 0,
+        heart: 0
+      }
+    });
   }
+
+  localStorage.setItem('lastSharedStreakAllGroups', streak);
 }
 
-// --- チャット機能 ---
 async function loadChat() {
   const box = document.getElementById('chatBox');
   if (!box) return;
 
   if (!currentGroupId) {
     box.innerHTML = `<div class="feed-empty">グループを作成または選択してください</div>`;
+    return;
+  }
+
+  if (!db) {
+    box.innerHTML = `<div class="feed-empty">Supabaseが未設定です</div>`;
     return;
   }
 
@@ -606,9 +1078,9 @@ async function loadChat() {
 
     return `
       <div class="chat-msg ${m.user_id === userId ? 'mine' : 'other'}">
-        <div class="msg-name">${m.display_name || 'ゲスト'}</div>
+        <div class="msg-name">${escapeHTML(m.display_name || 'ゲスト')}</div>
         <div class="msg-bubble">
-          ${(m.message || '').replace(/\n/g, '<br>')}
+          ${escapeHTML(m.message || '').replace(/\n/g, '<br>')}
 
           ${isStreak ? `
             <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
@@ -626,61 +1098,14 @@ async function loadChat() {
 }
 
 async function sendChat() {
-  if (!currentGroupId) {
-    toast('先にグループを作成または選択してください');
-    return;
-  }
+  if (!currentGroupId) return toast('先にグループを作成または選択してください');
+  if (!db) return toast('Supabaseが未設定です');
 
   const inp = document.getElementById('chatInp');
   if (!inp) return;
 
   const txt = inp.value.trim();
-  if (!txt) {
-    toast('コメントを入力してください');
-    return;
-  }
-
-  inp.disabled = true;
-
-  const { error } = await db
-    .from('chat_messages')
-    .insert({
-      group_id: currentGroupId,
-      user_id: userId,
-      display_name: displayName || 'ゲスト',
-      message: txt,
-      message_type: 'normal'
-    });
-
-  inp.disabled = false;
-
-  if (error) {
-    toast('コメント送信に失敗しました');
-    return;
-  }
-
-  inp.value = '';
-  toast('コメントを送信しました');
-  await loadChat();
-}
-
-async function sendChat() {
-  if (!currentGroupId) {
-    toast('先にグループを作成または選択してください');
-    return;
-  }
-
-  const inp = document.getElementById('chatInp');
-  const box = document.getElementById('chatBox');
-
-  if (!inp) return;
-
-  const txt = inp.value.trim();
-
-  if (!txt) {
-    toast('コメントを入力してください');
-    return;
-  }
+  if (!txt) return toast('コメントを入力してください');
 
   inp.disabled = true;
 
@@ -698,36 +1123,24 @@ async function sendChat() {
   if (error) {
     console.error(error);
     toast('コメント送信に失敗しました');
-
-    if (box) {
-      box.innerHTML += `
-        <div class="feed-empty">
-          送信エラー：${error.message}
-        </div>
-      `;
-    }
-
     return;
   }
 
   inp.value = '';
-
   toast('コメントを送信しました');
-
   await loadChat();
 }
 
 async function reactToMessage(messageId, type) {
+  if (!db) return;
+
   const { data, error } = await db
     .from('chat_messages')
     .select('reactions')
     .eq('id', messageId)
     .single();
 
-  if (error) {
-    toast('リアクション取得に失敗しました');
-    return;
-  }
+  if (error) return toast('リアクション取得に失敗しました');
 
   const reactions = data.reactions || {};
   reactions[type] = (reactions[type] || 0) + 1;
@@ -737,57 +1150,15 @@ async function reactToMessage(messageId, type) {
     .update({ reactions })
     .eq('id', messageId);
 
-  if (updateError) {
-    toast('リアクションに失敗しました');
-    return;
-  }
+  if (updateError) return toast('リアクションに失敗しました');
 
   await loadChat();
 }
 
-async function shareStreakToGroup() {
-  const strkText = document.getElementById('streakNum')?.textContent || '0日';
-  const streak = parseInt(strkText);
-
-  if (!streak || streak <= 0) return;
-
-  // 5日ごとのみ共有
-  if (streak % 5 !== 0) return;
-
-  // 同じ日数の重複投稿防止
-  const lastShared = localStorage.getItem('lastSharedStreakAllGroups');
-  if (String(lastShared) === String(streak)) return;
-
-  if (!myGroups || myGroups.length === 0) return;
-
-  for (const grp of myGroups) {
-    await db.from('chat_messages').insert({
-      group_id: grp.id,
-      user_id: userId,
-      display_name: displayName || 'ゲスト',
-      message: `🔥 ${displayName || 'ゲスト'}さんが${streak}日継続を達成しました！みんなで応援しましょう🎉`,
-      message_type: 'streak',
-      streak_days: streak,
-      reactions: {
-        fire: 0,
-        clap: 0,
-        heart: 0
-      }
-    });
-  }
-
-  localStorage.setItem('lastSharedStreakAllGroups', streak);
-  toast(`${streak}日継続を全グループに共有しました`);
-}
-
-// --- AI目標プラン提案 ---
 async function getAIPlan() {
   const goal = document.getElementById("goalInp").value;
 
-  if (!goal) {
-    toast("目標を入力してください");
-    return;
-  }
+  if (!goal) return toast("目標を入力してください");
 
   const btn = document.getElementById("aiBtn");
   const result = document.getElementById("aiPlanResult");
@@ -808,60 +1179,200 @@ async function getAIPlan() {
     const data = await res.json();
 
     if (!res.ok) {
-      result.innerHTML =
-        `<div class="ai-plan">エラー: ${data.error}</div>`;
+      result.innerHTML = `<div class="ai-plan">エラー: ${data.error}</div>`;
       return;
     }
 
-    result.innerHTML =
-      `<div class="ai-plan">${data.plan}</div>`;
-
+    result.innerHTML = `<div class="ai-plan">${data.plan}</div>`;
   } catch (e) {
-    result.innerHTML =
-      `<div class="ai-plan">通信エラー: ${e.message}</div>`;
+    result.innerHTML = `<div class="ai-plan">通信エラー: ${e.message}</div>`;
   }
 
   btn.textContent = "AIにプランを提案してもらう";
   btn.disabled = false;
 }
 
-let mixedChart;
+function decideAnimalType(logs) {
+  if (!logs || logs.length === 0) return "turtle";
 
-// Supabaseの記録からグラフ用データを作る
+  const strength = logs.filter(l => l.activity_type === "strength" || l.type === "strength").length;
+  const walk = logs.filter(l => l.activity_type === "walk" || l.type === "walk").length;
+  const other = logs.filter(l => l.activity_type !== "strength" && l.activity_type !== "walk").length;
+  const total = logs.length;
+  const variety = new Set(logs.map(l => l.activity_type || l.type)).size;
+
+  if (variety >= 3) return "monkey";
+  if (strength / total >= 0.8) return "gorilla";
+  if (walk / total >= 0.8) return "deer";
+  if (strength > 0 && walk > 0) return "bear";
+  if (other / total >= 0.7) return "dolphin";
+  if (total >= 5) return "eagle";
+  if (total >= 3) return "rabbit";
+
+  return "turtle";
+}
+
+function getUnlockedAnimals(logs) {
+  if (!logs || logs.length === 0) return ["turtle"];
+
+  const unlocked = new Set();
+
+  const strength = logs.filter(l => l.activity_type === "strength" || l.type === "strength").length;
+  const walk = logs.filter(l => l.activity_type === "walk" || l.type === "walk").length;
+  const other = logs.filter(l => l.activity_type !== "strength" && l.activity_type !== "walk").length;
+  const total = logs.length;
+  const variety = new Set(logs.map(l => l.activity_type || l.type)).size;
+
+  if (total >= 1) unlocked.add("turtle");
+  if (total >= 3) unlocked.add("rabbit");
+  if (total >= 5) unlocked.add("eagle");
+
+  if (strength >= 1) unlocked.add("wolf");
+  if (strength >= 3) unlocked.add("gorilla");
+  if (strength >= 5) unlocked.add("buffalo");
+
+  if (walk >= 1) unlocked.add("dog");
+  if (walk >= 3) unlocked.add("deer");
+  if (walk >= 5) unlocked.add("horse");
+
+  if (other >= 1) unlocked.add("otter");
+  if (other >= 3) unlocked.add("dolphin");
+  if (other >= 5) unlocked.add("swan");
+
+  if (strength >= 2 && walk >= 2) unlocked.add("bear");
+  if (variety >= 3) unlocked.add("monkey");
+  if (total >= 10) unlocked.add("cheetah");
+  if (total >= 15) unlocked.add("squirrel");
+
+  return Array.from(unlocked);
+}
+
+async function updateAnimalProfile() {
+  if (!db || !userId) return;
+
+  const [sRes, wRes, oRes] = await Promise.all([
+    db.from("strength_logs").select("*").eq("user_id", userId),
+    db.from("walk_logs").select("*").eq("user_id", userId),
+    db.from("activity_logs").select("*").eq("user_id", userId)
+  ]);
+
+  const logs = [
+    ...(sRes.data || []).map(x => ({ ...x, activity_type: "strength" })),
+    ...(wRes.data || []).map(x => ({ ...x, activity_type: "walk" })),
+    ...(oRes.data || [])
+  ];
+
+  const typeKey = decideAnimalType(logs);
+  const animal = ANIMAL_TYPES[typeKey];
+  const unlockedAnimals = getUnlockedAnimals(logs);
+
+  const profileEl = document.getElementById("animalProfile");
+  const ecoEl = document.getElementById("ecosystemView");
+
+  if (!profileEl || !ecoEl) return;
+
+  profileEl.innerHTML = `
+    <div class="animal-main">${animal.emoji}</div>
+    <strong>${animal.name}タイプ｜${animal.label}</strong><br>
+    ${animal.desc}
+  `;
+
+  ecoEl.innerHTML = `🌲 ${unlockedAnimals.map(a => ANIMAL_TYPES[a].emoji).join(" 🌲 ")} 🌲`;
+
+  try {
+    await db.from("ecosystem_profiles").upsert({
+      user_id: userId,
+      animal_type: typeKey,
+      animal_name: animal.name,
+      ecosystem_count: unlockedAnimals.length,
+      total_exp: logs.length * 10,
+      last_updated: new Date().toISOString()
+    });
+  } catch (e) {
+    console.warn("ecosystem_profiles update skipped", e);
+  }
+}
+
+function toggleDataset(index) {
+  if (!mixedChart) return;
+
+  const isVisible = mixedChart.isDatasetVisible(index);
+
+  if (isVisible) {
+    mixedChart.hide(index);
+  } else {
+    mixedChart.show(index);
+  }
+}
+
 async function getGraphData() {
   if (!db) {
-    return { labels: [], bodyWeight: [], strength: [], walk: [] };
+    return { labels: [], bodyWeight: [], strength: [], walk: [], moodDiff: [] };
   }
 
-  const [sRes, wRes] = await Promise.all([
+  const [sRes, wRes, bRes] = await Promise.all([
     db.from('strength_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
-    db.from('walk_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true })
+    db.from('walk_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true }),
+    db.from('body_logs').select('*').eq('user_id', userId).order('logged_at', { ascending: true })
   ]);
 
   const byDate = {};
 
+  function ensureDate(date) {
+    if (!date) return;
+    if (!byDate[date]) {
+      byDate[date] = {
+        strength: 0,
+        walk: 0,
+        bodyWeight: null,
+        moodDiffTotal: 0,
+        moodDiffCount: 0
+      };
+    }
+  }
+
+  (bRes.data || []).forEach(r => {
+    if (!r.logged_at) return;
+    const date = r.logged_at.split('T')[0];
+    ensureDate(date);
+    byDate[date].bodyWeight = Number(r.weight_kg) || null;
+  });
+
   (sRes.data || []).forEach(r => {
     if (!r.logged_at) return;
-
     const date = r.logged_at.split('T')[0];
-    const weight = Number(r.weight_kg) || 0;
-    const reps = Number(r.reps) || 0;
+    ensureDate(date);
 
-    // 推定1RM = 重量 × (1 + 回数 / 30)
-    const rm = Math.round(weight * (1 + reps / 30) * 10) / 10;
+    const volume =
+      (Number(r.weight_kg) || 0) *
+      (Number(r.reps) || 0) *
+      (Number(r.sets) || 1);
 
-    if (!byDate[date]) byDate[date] = { strength: 0, walk: 0 };
-    byDate[date].strength = Math.max(byDate[date].strength, rm);
+    byDate[date].strength += volume;
+
+    const before = Number(r.mood_before);
+    const after = Number(r.mood_after);
+
+    if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
+      byDate[date].moodDiffTotal += after - before;
+      byDate[date].moodDiffCount += 1;
+    }
   });
 
   (wRes.data || []).forEach(r => {
     if (!r.logged_at) return;
-
     const date = r.logged_at.split('T')[0];
-    const dist = Number(r.distance_km) || 0;
+    ensureDate(date);
 
-    if (!byDate[date]) byDate[date] = { strength: 0, walk: 0 };
-    byDate[date].walk += dist;
+    byDate[date].walk += Number(r.distance_km) || 0;
+
+    const before = Number(r.mood_before);
+    const after = Number(r.mood_after);
+
+    if (before >= 1 && before <= 5 && after >= 1 && after <= 5) {
+      byDate[date].moodDiffTotal += after - before;
+      byDate[date].moodDiffCount += 1;
+    }
   });
 
   const dates = Object.keys(byDate).sort();
@@ -871,13 +1382,17 @@ async function getGraphData() {
       const parts = d.split('-');
       return `${Number(parts[1])}/${Number(parts[2])}`;
     }),
-    bodyWeight: dates.map(() => null),
-    strength: dates.map(d => byDate[d].strength || 0),
-    walk: dates.map(d => Math.round((byDate[d].walk || 0) * 10) / 10)
+    bodyWeight: dates.map(d => byDate[d].bodyWeight),
+    strength: dates.map(d => Math.round(byDate[d].strength || 0)),
+    walk: dates.map(d => Math.round((byDate[d].walk || 0) * 10) / 10),
+    moodDiff: dates.map(d =>
+      byDate[d].moodDiffCount
+        ? Number((byDate[d].moodDiffTotal / byDate[d].moodDiffCount).toFixed(2))
+        : null
+    )
   };
 }
 
-// グラフの初期化
 async function initChart() {
   const canvas = document.getElementById('mixedChart');
   if (!canvas || !window.Chart) return;
@@ -886,6 +1401,10 @@ async function initChart() {
 
   const ctx = canvas.getContext('2d');
   const graph = await getGraphData();
+
+  if (mixedChart) {
+    mixedChart.destroy();
+  }
 
   mixedChart = new Chart(ctx, {
     type: 'line',
@@ -902,11 +1421,12 @@ async function initChart() {
           yAxisID: 'y'
         },
         {
-          label: '筋トレ(RM)',
+          label: '筋トレ量',
           data: graph.strength,
           borderColor: '#2A7A3B',
           backgroundColor: 'rgba(42,122,59,0.12)',
           tension: 0.3,
+          spanGaps: true,
           yAxisID: 'y1'
         },
         {
@@ -917,6 +1437,15 @@ async function initChart() {
           borderWidth: 1,
           type: 'bar',
           yAxisID: 'y1'
+        },
+        {
+          label: '気分改善量',
+          data: graph.moodDiff,
+          borderColor: '#8B6914',
+          backgroundColor: 'rgba(139,105,20,0.12)',
+          tension: 0.3,
+          spanGaps: true,
+          yAxisID: 'y2'
         }
       ]
     },
@@ -937,7 +1466,15 @@ async function initChart() {
           type: 'linear',
           position: 'right',
           grid: { drawOnChartArea: false },
-          title: { display: true, text: 'RM / km' }
+          title: { display: true, text: '筋トレ量 / km' }
+        },
+        y2: {
+          type: 'linear',
+          position: 'right',
+          min: -4,
+          max: 4,
+          display: false,
+          grid: { drawOnChartArea: false }
         }
       },
       plugins: {
@@ -947,50 +1484,29 @@ async function initChart() {
   });
 }
 
-// 記録を保存したあとにグラフを更新する
 async function refreshChart() {
-  if (!mixedChart) return;
-
-  const graph = await getGraphData();
-
-  mixedChart.data.labels = graph.labels;
-  mixedChart.data.datasets[0].data = graph.bodyWeight;
-  mixedChart.data.datasets[1].data = graph.strength;
-  mixedChart.data.datasets[2].data = graph.walk;
-
-  mixedChart.update();
+  await initChart();
 }
 
-// チェックボックスで表示・非表示を切り替える
-function toggleDataset(index) {
-  if (!mixedChart) return;
+(async () => {
+  setGreeting();
+  updateGroupSelect();
 
-  const isVisible = mixedChart.isDatasetVisible(index);
+  if (db) {
+    await Promise.all([loadPBests(), loadWalkBest()]);
+    renderHome();
+    await calcStreak();
+    await initChart();
+    await updateMoodSummary();
+    await updateAnimalProfile();
 
-  if (isVisible) {
-    mixedChart.hide(index);
+    if (currentGroupId) {
+      await loadChat();
+    }
   } else {
-    mixedChart.show(index);
+    renderHome();
   }
-}
-
-// データセットの表示・非表示切り替え（自律性のための機能）
-function toggleDataset(index) {
-  if (!mixedChart) return;
-
-  const isVisible = mixedChart.isDatasetVisible(index);
-  if (isVisible) {
-    mixedChart.hide(index);
-  } else {
-    mixedChart.show(index);
-  }
-}
-
-// 起動時処理（既存の即時実行関数の中に追加）
-// (async () => { ... initChart(); ... })();
+})();
 </script>
 </body>
 </html>
-
-
-
