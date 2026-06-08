@@ -1473,6 +1473,20 @@ async function initChart() {
 });
 
 // 記録を保存したあとにグラフを更新する
+let mixedChart;
+
+function toggleDataset(index) {
+  if (!mixedChart) return;
+
+  const isVisible = mixedChart.isDatasetVisible(index);
+
+  if (isVisible) {
+    mixedChart.hide(index);
+  } else {
+    mixedChart.show(index);
+  }
+}
+
 async function refreshChart() {
   const canvas = document.getElementById('mixedChart');
   if (!canvas || !userId) return;
@@ -1556,9 +1570,7 @@ async function refreshChart() {
     }
   });
 
-  const rows = Object.keys(graphMap)
-    .sort()
-    .map(key => graphMap[key]);
+  const rows = Object.keys(graphMap).sort().map(key => graphMap[key]);
 
   const graph = {
     labels: rows.map(r => r.label),
@@ -1653,20 +1665,6 @@ async function refreshChart() {
     }
   });
 }
-
-// チェックボックスで表示・非表示を切り替える
-function toggleDataset(index) {
-  if (!mixedChart) return;
-
-  const isVisible = mixedChart.isDatasetVisible(index);
-
-  if (isVisible) {
-    mixedChart.hide(index);
-  } else {
-    mixedChart.show(index);
-  }
-}
 </script>
 </body>
 </html>
-
