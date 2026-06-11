@@ -1132,8 +1132,18 @@ ${volumeText}
 }
 
 async function shareWeeklyRanking() {
+  console.log("ランキング開始");
+
   if (!isThursday()) return;
-  if (!currentUserId) return;
+
+  console.log("木曜判定OK");
+
+  if (!currentUserId) {
+    console.log("currentUserIdなし");
+    return;
+  }
+
+  console.log("ユーザーOK");
 
   const weekKey = getWeekKey();
   const since = getLast7DaysStartISO();
