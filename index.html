@@ -955,6 +955,8 @@ async function afterSave() {
     console.error("Animal profile error:", e);
   }
 
+  await shareWeeklyRanking();
+
   resetMoodInputs();
   showScreen('home');
   await shareStreakToGroup();
@@ -1014,6 +1016,234 @@ async function calcStreak() {
   if (streakEl) streakEl.innerText = uniqueDays + '日';
   if (chipEl) chipEl.innerText = `✅ 累計 ${uniqueDays}日`;
 }
+
+function getWeekKey() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const oneJan = new Date(year, 0, 1);
+  const week = Math.ceil((((d - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
+  return `${year}-W${week}`;
+}
+
+function isThursday() {
+  return true;
+}
+
+function getDateOnly(dateStr) {
+  if (!dateStr) return null;
+  return dateStr.slice(0, 10);
+}
+
+function getLast7DaysStartISO() {
+  const d = new Date();
+  d.setDate(d.getDate() - 7);
+  return d.toISOString();
+}
+
+function calcDaysBetween(startDate, endDate) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  return Math.max(1, Math.ceil((end - start) / 86400000) + 1);
+}
+
+function calcUserRankingData(user, allLogs, weeklyLogs) {
+  const allActiveDays = new Set();
+
+  allLogs.forEach(log => {
+    const day = getDateOnly(log.created_at);
+    if (day) allActiveDays.add(day);
+  });
+
+  const firstLogDate = allLogs.length
+    ? allLogs
+        .map(log => log.created_at)
+        .filter(Boolean)
+        .sort()[0]
+    : null;
+
+  const totalTargetDays = firstLogDate
+    ? calcDaysBetween(firstLogDate, new Date().toISOString())
+    : 7;
+
+  const continuationRate = firstLogDate
+    ? Math.round((allActiveDays.size / totalTargetDays) * 100)
+    : 0;
+
+  let weeklyStrengthVolume = 0;
+  let weeklyWalkDistance = 0;
+  let weeklyOtherCount = 0;
+
+  weeklyLogs.strength.forEach(log => {
+    const weight = Number(log.weight || 0);
+    const reps = Number(log.reps || 0);
+    const sets = Number(log.sets || 0);
+    weeklyStrengthVolume += weight * reps * sets;
+  });
+
+  weeklyLogs.walk.forEach(log => {
+    weeklyWalkDistance += Number(log.distance || log.distance_km || 0);
+  });
+
+  weeklyLogs.activity.forEach(() => {
+    weeklyOtherCount += 1;
+  });
+
+  const weeklyExerciseScore =
+    Math.floor(weeklyStrengthVolume / 100) +
+    Math.floor(weeklyWalkDistance * 10) +
+    weeklyOtherCount * 10;
+
+  return {
+    userId: user.id,
+    name: user.name || '匿名ユーザー',
+    group_id: user.group_id,
+    activeDaysFromStart: allActiveDays.size,
+    totalTargetDays,
+    continuationRate,
+    weeklyStrengthVolume,
+    weeklyWalkDistance,
+    weeklyOtherCount,
+    weeklyExerciseScore
+  };
+}
+
+function formatRankingText(title, rankingByRate, rankingByVolume) {
+  const rateText = rankingByRate.length
+    ? rankingByRate.map((u, i) =>
+        `${i + 1}位：${u.name}　継続率${u.continuationRate}%（${u.activeDaysFromStart}/${u.totalTargetDays}日）`
+      ).join('\n')
+    : 'まだ記録がありません。';
+
+  const volumeText = rankingByVolume.length
+    ? rankingByVolume.map((u, i) =>
+        `${i + 1}位：${u.name}　今週の運動量スコア${u.weeklyExerciseScore}`
+      ).join('\n')
+    : 'まだ記録がありません。';
+
+  return `🏆 ${title}
+
+【累計継続率ランキング TOP5】
+${rateText}
+
+【今週の総運動量ランキング TOP5】
+${volumeText}
+
+👏 リアクションで称え合いましょう！`;
+}
+
+async function shareWeeklyRanking() {
+  if (!isThursday()) return;
+  if (!currentUserId) return;
+
+  const weekKey = getWeekKey();
+  const since = getLast7DaysStartISO();
+
+  const { data: existing } = await db
+    .from('chat_messages')
+    .select('id')
+    .eq('type', 'weekly_ranking')
+    .eq('meta->>weekKey', weekKey)
+    .limit(1);
+
+  if (existing && existing.length > 0) return;
+
+  const [
+    usersRes,
+    allStrengthRes,
+    allWalkRes,
+    allActivityRes,
+    weeklyStrengthRes,
+    weeklyWalkRes,
+    weeklyActivityRes
+  ] = await Promise.all([
+    db.from('users').select('id, name, group_id'),
+
+    db.from('strength_logs').select('*'),
+    db.from('walk_logs').select('*'),
+    db.from('activity_logs').select('*'),
+
+    db.from('strength_logs').select('*').gte('created_at', since),
+    db.from('walk_logs').select('*').gte('created_at', since),
+    db.from('activity_logs').select('*').gte('created_at', since)
+  ]);
+
+  const users = usersRes.data || [];
+
+  const allStrength = allStrengthRes.data || [];
+  const allWalk = allWalkRes.data || [];
+  const allActivity = allActivityRes.data || [];
+
+  const weeklyStrength = weeklyStrengthRes.data || [];
+  const weeklyWalk = weeklyWalkRes.data || [];
+  const weeklyActivity = weeklyActivityRes.data || [];
+
+  const rankingData = users.map(user => {
+    const userAllLogs = [
+      ...allStrength.filter(log => log.user_id === user.id),
+      ...allWalk.filter(log => log.user_id === user.id),
+      ...allActivity.filter(log => log.user_id === user.id)
+    ];
+
+    const userWeeklyLogs = {
+      strength: weeklyStrength.filter(log => log.user_id === user.id),
+      walk: weeklyWalk.filter(log => log.user_id === user.id),
+      activity: weeklyActivity.filter(log => log.user_id === user.id)
+    };
+
+    return calcUserRankingData(user, userAllLogs, userWeeklyLogs);
+  });
+
+  // グループ別ランキング
+  if (currentGroupId) {
+    const groupRankingData = rankingData.filter(u => u.group_id === currentGroupId);
+
+    const groupByRate = [...groupRankingData]
+      .sort((a, b) => b.continuationRate - a.continuationRate || b.weeklyExerciseScore - a.weeklyExerciseScore)
+      .slice(0, 5);
+
+    const groupByVolume = [...groupRankingData]
+      .sort((a, b) => b.weeklyExerciseScore - a.weeklyExerciseScore || b.continuationRate - a.continuationRate)
+      .slice(0, 5);
+
+    const groupText = formatRankingText('グループ内ランキング', groupByRate, groupByVolume);
+
+    await db.from('chat_messages').insert({
+      group_id: currentGroupId,
+      user_id: currentUserId,
+      message: groupText,
+      type: 'weekly_ranking',
+      meta: {
+        weekKey,
+        scope: 'group',
+        groupId: currentGroupId
+      }
+    });
+  }
+
+  // アプリ全体ランキング
+  const overallByRate = [...rankingData]
+    .sort((a, b) => b.continuationRate - a.continuationRate || b.weeklyExerciseScore - a.weeklyExerciseScore)
+    .slice(0, 5);
+
+  const overallByVolume = [...rankingData]
+    .sort((a, b) => b.weeklyExerciseScore - a.weeklyExerciseScore || b.continuationRate - a.continuationRate)
+    .slice(0, 5);
+
+  const overallText = formatRankingText('アプリ全体ランキング', overallByRate, overallByVolume);
+
+  await db.from('chat_messages').insert({
+    group_id: currentGroupId || null,
+    user_id: currentUserId,
+    message: overallText,
+    type: 'weekly_ranking',
+    meta: {
+      weekKey,
+      scope: 'overall'
+    }
+  });
+}
+
+
 
 async function shareStreakToGroup() {
   if (!db) return;
