@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -1159,38 +1160,31 @@ const alreadyPosted = (existing || []).some(msg => {
 
 if (alreadyPosted) return;
 
-const [
-  allStrengthRes,
-  allWalkRes,
-  allActivityRes,
-  weeklyStrengthRes,
-  weeklyWalkRes,
-  weeklyActivityRes
-] = await Promise.all([
-  db.from('strength_logs').select('*'),
-  db.from('walk_logs').select('*'),
-  db.from('activity_logs').select('*'),
+  const [
+    usersRes,
+    allStrengthRes,
+    allWalkRes,
+    allActivityRes,
+    weeklyStrengthRes,
+    weeklyWalkRes,
+    weeklyActivityRes
+  ] = await Promise.all([
+    db.from('users').select('id, name, group_id'),
 
-  db.from('strength_logs').select('*').gte('created_at', since),
-  db.from('walk_logs').select('*').gte('created_at', since),
-  db.from('activity_logs').select('*').gte('created_at', since)
-]);
+    db.from('strength_logs').select('*'),
+    db.from('walk_logs').select('*'),
+    db.from('activity_logs').select('*'),
 
-const allStrength = allStrengthRes.data || [];
-const allWalk = allWalkRes.data || [];
-const allActivity = allActivityRes.data || [];
+    db.from('strength_logs').select('*').gte('created_at', since),
+    db.from('walk_logs').select('*').gte('created_at', since),
+    db.from('activity_logs').select('*').gte('created_at', since)
+  ]);
 
-const userIds = Array.from(new Set([
-  ...allStrength.map(log => log.user_id),
-  ...allWalk.map(log => log.user_id),
-  ...allActivity.map(log => log.user_id)
-].filter(Boolean)));
+  const users = usersRes.data || [];
 
-const users = userIds.map(id => ({
-  id,
-  name: id === userId ? (displayName || 'ゲスト') : 'ユーザー',
-  group_id: currentGroupId
-}));
+  const allStrength = allStrengthRes.data || [];
+  const allWalk = allWalkRes.data || [];
+  const allActivity = allActivityRes.data || [];
 
   const weeklyStrength = weeklyStrengthRes.data || [];
   const weeklyWalk = weeklyWalkRes.data || [];
@@ -1226,23 +1220,18 @@ const users = userIds.map(id => ({
 
     const groupText = formatRankingText('グループ内ランキング', groupByRate, groupByVolume);
 
-const groupInsert = await db
-  .from('chat_messages')
-  .insert({
-    group_id: currentGroupId,
-    user_id: userId,
-    display_name: "ランキングBOT",
-    message: groupText,
-    reactions: {},
-    type: "weekly_ranking",
-    meta: {
-      weekKey,
-      scope: "group",
-      groupId: currentGroupId
-    }
-  });
-
-console.log("group insert", groupInsert);
+    await db.from('chat_messages').insert({
+      group_id: currentGroupId,
+      user_id: userId,
+      message: groupText,
+      type: 'weekly_ranking',
+      meta: {
+        weekKey,
+        scope: 'group',
+        groupId: currentGroupId
+      }
+    });
+  }
 
   // アプリ全体ランキング
   const overallByRate = [...rankingData]
@@ -1255,22 +1244,19 @@ console.log("group insert", groupInsert);
 
   const overallText = formatRankingText('アプリ全体ランキング', overallByRate, overallByVolume);
 
-const overallInsert = await db
-  .from('chat_messages')
-  .insert({
-    group_id: currentGroupId,
-    user_id: userId,
-    display_name: "ランキングBOT",
+  await db.from('chat_messages').insert({
+    group_id: currentGroupId || null,
+    user_id: currentUserId,
     message: overallText,
-    reactions: {},
-    type: "weekly_ranking",
+    type: 'weekly_ranking',
     meta: {
       weekKey,
-      scope: "overall"
+      scope: 'overall'
     }
   });
+}
 
-console.log("overall insert", overallInsert);
+
 
 async function shareStreakToGroup() {
   if (!db) return;
