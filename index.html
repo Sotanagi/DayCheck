@@ -1169,8 +1169,8 @@ async function shareWeeklyRanking() {
     db.from('walk_logs').select('*'),
     db.from('activity_logs').select('*'),
 
-    db.from('strength_logs').select('*').gte('created_at', since),
-    db.from('walk_logs').select('*').gte('created_at', since),
+    db.from('strength_logs').select('*').gte('logged_at', since),
+    db.from('walk_logs').select('*').gte('logged_at', since),
     db.from('activity_logs').select('*').gte('created_at', since)
   ]);
 
