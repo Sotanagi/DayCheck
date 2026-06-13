@@ -1073,6 +1073,8 @@ function calcUserRankingData(user, allLogs, weeklyLogs) {
   let weeklyWalkDistance = 0;
   let weeklyOtherCount = 0;
 
+  console.log('weeklyStrength', weeklyLogs.strength);
+
   weeklyLogs.strength.forEach(log => {
     const weight = Number(log.weight_kg || log.weight || 0);
     const reps = Number(log.reps || 0);
