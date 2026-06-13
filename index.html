@@ -1139,7 +1139,7 @@ async function shareWeeklyRanking() {
   console.log("木曜判定OK");
 
   if (!currentUserId) {
-    console.log("currentUserIdなし");
+    console.log("userIdなし");
     return;
   }
 
@@ -1219,7 +1219,7 @@ async function shareWeeklyRanking() {
 
     await db.from('chat_messages').insert({
       group_id: currentGroupId,
-      user_id: currentUserId,
+      user_id: userId,
       message: groupText,
       type: 'weekly_ranking',
       meta: {
