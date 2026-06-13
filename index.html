@@ -1050,7 +1050,7 @@ function calcUserRankingData(user, allLogs, weeklyLogs) {
   const allActiveDays = new Set();
 
   allLogs.forEach(log => {
-    const day = getDateOnly(log.created_at);
+    const day = getDateOnly(log.logged_at || log.created_at);
     if (day) allActiveDays.add(day);
   });
 
@@ -1074,7 +1074,7 @@ function calcUserRankingData(user, allLogs, weeklyLogs) {
   let weeklyOtherCount = 0;
 
   weeklyLogs.strength.forEach(log => {
-    const weight = Number(log.weight || 0);
+    const weight = Number(log.weight_kg || log.weight || 0);
     const reps = Number(log.reps || 0);
     const sets = Number(log.sets || 0);
     weeklyStrengthVolume += weight * reps * sets;
