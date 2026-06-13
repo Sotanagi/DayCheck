@@ -1148,14 +1148,16 @@ async function shareWeeklyRanking() {
   const weekKey = getWeekKey();
   const since = getLast7DaysStartISO();
 
-  const { data: existing } = await db
-    .from('chat_messages')
-    .select('id')
-    .eq('type', 'weekly_ranking')
-    .eq('meta->>weekKey', weekKey)
-    .limit(1);
+const { data: existing } = await db
+  .from('chat_messages')
+  .select('id, meta')
+  .eq('type', 'weekly_ranking');
 
-  if (existing && existing.length > 0) return;
+const alreadyPosted = (existing || []).some(msg => {
+  return msg.meta && msg.meta.weekKey === weekKey;
+});
+
+if (alreadyPosted) return;
 
   const [
     usersRes,
