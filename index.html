@@ -1749,6 +1749,8 @@ async function refreshChart() {
     await updateMoodSummary();
     await updateAnimalProfile();
 
+    await shareWeeklyRanking();
+
     if (currentGroupId) {
       await loadChat();
     }
@@ -1756,6 +1758,7 @@ async function refreshChart() {
     renderHome();
   }
 })();
+
 </script>
 </body>
 </html>
