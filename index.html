@@ -1245,7 +1245,7 @@ if (alreadyPosted) return;
 
   await db.from('chat_messages').insert({
     group_id: currentGroupId || null,
-    user_id: currentUserId,
+    user_id: userId,
     message: overallText,
     type: 'weekly_ranking',
     meta: {
