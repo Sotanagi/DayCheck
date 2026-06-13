@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -1027,7 +1026,7 @@ function getWeekKey() {
 }
 
 function isThursday() {
-  return true;
+  return new Date().getDay() === 4;
 }
 
 function getDateOnly(dateStr) {
@@ -1133,35 +1132,30 @@ ${volumeText}
 }
 
 async function shareWeeklyRanking() {
-  alert("ランキング開始");
+  console.log("ランキング開始");
 
   if (!isThursday()) return;
-
-  console.log("木曜判定OK");
-
-  if (!userId) {
-    console.log("userIdなし");
-    return;
-  }
-
-  console.log("ユーザーOK");
+  if (!db || !userId || !currentGroupId) return;
 
   const weekKey = getWeekKey();
   const since = getLast7DaysStartISO();
 
-const { data: existing } = await db
-  .from('chat_messages')
-  .select('id, meta')
-  .eq('type', 'weekly_ranking');
+  const { data: existing } = await db
+    .from('chat_messages')
+    .select('id, meta')
+    .eq('group_id', currentGroupId)
+    .eq('message_type', 'weekly_ranking');
 
-const alreadyPosted = (existing || []).some(msg => {
-  return msg.meta && msg.meta.weekKey === weekKey;
-});
+  const alreadyPosted = (existing || []).some(msg =>
+    msg.meta && msg.meta.weekKey === weekKey
+  );
 
-if (alreadyPosted) return;
+  if (alreadyPosted) {
+    console.log("今週のランキングは投稿済み");
+    return;
+  }
 
   const [
-    usersRes,
     allStrengthRes,
     allWalkRes,
     allActivityRes,
@@ -1169,8 +1163,6 @@ if (alreadyPosted) return;
     weeklyWalkRes,
     weeklyActivityRes
   ] = await Promise.all([
-    db.from('users').select('id, name, group_id'),
-
     db.from('strength_logs').select('*'),
     db.from('walk_logs').select('*'),
     db.from('activity_logs').select('*'),
@@ -1180,8 +1172,6 @@ if (alreadyPosted) return;
     db.from('activity_logs').select('*').gte('created_at', since)
   ]);
 
-  const users = usersRes.data || [];
-
   const allStrength = allStrengthRes.data || [];
   const allWalk = allWalkRes.data || [];
   const allActivity = allActivityRes.data || [];
@@ -1189,6 +1179,18 @@ if (alreadyPosted) return;
   const weeklyStrength = weeklyStrengthRes.data || [];
   const weeklyWalk = weeklyWalkRes.data || [];
   const weeklyActivity = weeklyActivityRes.data || [];
+
+  const userIds = Array.from(new Set([
+    ...allStrength.map(log => log.user_id),
+    ...allWalk.map(log => log.user_id),
+    ...allActivity.map(log => log.user_id)
+  ].filter(Boolean)));
+
+  const users = userIds.map(id => ({
+    id,
+    name: id === userId ? (displayName || 'ゲスト') : 'ユーザー',
+    group_id: currentGroupId
+  }));
 
   const rankingData = users.map(user => {
     const userAllLogs = [
@@ -1206,57 +1208,42 @@ if (alreadyPosted) return;
     return calcUserRankingData(user, userAllLogs, userWeeklyLogs);
   });
 
-  // グループ別ランキング
-  if (currentGroupId) {
-    const groupRankingData = rankingData.filter(u => u.group_id === currentGroupId);
-
-    const groupByRate = [...groupRankingData]
-      .sort((a, b) => b.continuationRate - a.continuationRate || b.weeklyExerciseScore - a.weeklyExerciseScore)
-      .slice(0, 5);
-
-    const groupByVolume = [...groupRankingData]
-      .sort((a, b) => b.weeklyExerciseScore - a.weeklyExerciseScore || b.continuationRate - a.continuationRate)
-      .slice(0, 5);
-
-    const groupText = formatRankingText('グループ内ランキング', groupByRate, groupByVolume);
-
-    await db.from('chat_messages').insert({
-      group_id: currentGroupId,
-      user_id: userId,
-      message: groupText,
-      type: 'weekly_ranking',
-      meta: {
-        weekKey,
-        scope: 'group',
-        groupId: currentGroupId
-      }
-    });
-  }
-
-  // アプリ全体ランキング
-  const overallByRate = [...rankingData]
+  const groupByRate = [...rankingData]
     .sort((a, b) => b.continuationRate - a.continuationRate || b.weeklyExerciseScore - a.weeklyExerciseScore)
     .slice(0, 5);
 
-  const overallByVolume = [...rankingData]
+  const groupByVolume = [...rankingData]
     .sort((a, b) => b.weeklyExerciseScore - a.weeklyExerciseScore || b.continuationRate - a.continuationRate)
     .slice(0, 5);
 
-  const overallText = formatRankingText('アプリ全体ランキング', overallByRate, overallByVolume);
+  const groupText = formatRankingText('グループ内ランキング', groupByRate, groupByVolume);
 
-  await db.from('chat_messages').insert({
-    group_id: currentGroupId || null,
-    user_id: currentUserId,
-    message: overallText,
-    type: 'weekly_ranking',
+  const { error } = await db.from('chat_messages').insert({
+    group_id: currentGroupId,
+    user_id: userId,
+    display_name: 'ランキングBOT',
+    message: groupText,
+    message_type: 'weekly_ranking',
+    reactions: {
+      fire: 0,
+      clap: 0,
+      heart: 0
+    },
     meta: {
       weekKey,
-      scope: 'overall'
+      scope: 'group',
+      groupId: currentGroupId
     }
   });
+
+  if (error) {
+    console.error("ランキング投稿失敗", error);
+    return;
+  }
+
+  console.log("ランキング投稿成功");
+  await loadChat();
 }
-
-
 
 async function shareStreakToGroup() {
   if (!db) return;
@@ -1324,7 +1311,7 @@ async function loadChat() {
 
   box.innerHTML = data.map(m => {
     const reactions = m.reactions || {};
-    const isStreak = m.message_type === 'streak';
+    const isReactionPost = m.message_type === 'streak' || m.message_type === 'weekly_ranking';
 
     return `
       <div class="chat-msg ${m.user_id === userId ? 'mine' : 'other'}">
@@ -1332,7 +1319,7 @@ async function loadChat() {
         <div class="msg-bubble">
           ${escapeHTML(m.message || '').replace(/\n/g, '<br>')}
 
-          ${isStreak ? `
+          ${isReactionPost ? `
             <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
               <button class="chip-btn" onclick="reactToMessage('${m.id}','fire')">🔥 ${reactions.fire || 0}</button>
               <button class="chip-btn" onclick="reactToMessage('${m.id}','clap')">👏 ${reactions.clap || 0}</button>
