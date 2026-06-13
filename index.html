@@ -1055,11 +1055,11 @@ function calcUserRankingData(user, allLogs, weeklyLogs) {
   });
 
   const firstLogDate = allLogs.length
-    ? allLogs
-        .map(log => log.created_at)
-        .filter(Boolean)
-        .sort()[0]
-    : null;
+  ? allLogs
+      .map(log => log.logged_at || log.created_at)
+      .filter(Boolean)
+      .sort()[0]
+  : null;
 
   const totalTargetDays = firstLogDate
     ? calcDaysBetween(firstLogDate, new Date().toISOString())
