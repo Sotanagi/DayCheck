@@ -1226,18 +1226,23 @@ const users = userIds.map(id => ({
 
     const groupText = formatRankingText('グループ内ランキング', groupByRate, groupByVolume);
 
-    await db.from('chat_messages').insert({
-      group_id: currentGroupId,
-      user_id: userId,
-      message: groupText,
-      type: 'weekly_ranking',
-      meta: {
-        weekKey,
-        scope: 'group',
-        groupId: currentGroupId
-      }
-    });
-  }
+const groupInsert = await db
+  .from('chat_messages')
+  .insert({
+    group_id: currentGroupId,
+    user_id: userId,
+    display_name: "ランキングBOT",
+    message: groupText,
+    reactions: {},
+    type: "weekly_ranking",
+    meta: {
+      weekKey,
+      scope: "group",
+      groupId: currentGroupId
+    }
+  });
+
+console.log("group insert", groupInsert);
 
   // アプリ全体ランキング
   const overallByRate = [...rankingData]
@@ -1250,19 +1255,22 @@ const users = userIds.map(id => ({
 
   const overallText = formatRankingText('アプリ全体ランキング', overallByRate, overallByVolume);
 
-  await db.from('chat_messages').insert({
-    group_id: currentGroupId || null,
+const overallInsert = await db
+  .from('chat_messages')
+  .insert({
+    group_id: currentGroupId,
     user_id: userId,
+    display_name: "ランキングBOT",
     message: overallText,
-    type: 'weekly_ranking',
+    reactions: {},
+    type: "weekly_ranking",
     meta: {
       weekKey,
-      scope: 'overall'
+      scope: "overall"
     }
   });
-}
 
-
+console.log("overall insert", overallInsert);
 
 async function shareStreakToGroup() {
   if (!db) return;
