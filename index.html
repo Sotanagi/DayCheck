@@ -1159,31 +1159,38 @@ const alreadyPosted = (existing || []).some(msg => {
 
 if (alreadyPosted) return;
 
-  const [
-    usersRes,
-    allStrengthRes,
-    allWalkRes,
-    allActivityRes,
-    weeklyStrengthRes,
-    weeklyWalkRes,
-    weeklyActivityRes
-  ] = await Promise.all([
-    db.from('users').select('id, name, group_id'),
+const [
+  allStrengthRes,
+  allWalkRes,
+  allActivityRes,
+  weeklyStrengthRes,
+  weeklyWalkRes,
+  weeklyActivityRes
+] = await Promise.all([
+  db.from('strength_logs').select('*'),
+  db.from('walk_logs').select('*'),
+  db.from('activity_logs').select('*'),
 
-    db.from('strength_logs').select('*'),
-    db.from('walk_logs').select('*'),
-    db.from('activity_logs').select('*'),
+  db.from('strength_logs').select('*').gte('created_at', since),
+  db.from('walk_logs').select('*').gte('created_at', since),
+  db.from('activity_logs').select('*').gte('created_at', since)
+]);
 
-    db.from('strength_logs').select('*').gte('created_at', since),
-    db.from('walk_logs').select('*').gte('created_at', since),
-    db.from('activity_logs').select('*').gte('created_at', since)
-  ]);
+const allStrength = allStrengthRes.data || [];
+const allWalk = allWalkRes.data || [];
+const allActivity = allActivityRes.data || [];
 
-  const users = usersRes.data || [];
+const userIds = Array.from(new Set([
+  ...allStrength.map(log => log.user_id),
+  ...allWalk.map(log => log.user_id),
+  ...allActivity.map(log => log.user_id)
+].filter(Boolean)));
 
-  const allStrength = allStrengthRes.data || [];
-  const allWalk = allWalkRes.data || [];
-  const allActivity = allActivityRes.data || [];
+const users = userIds.map(id => ({
+  id,
+  name: id === userId ? (displayName || 'ゲスト') : 'ユーザー',
+  group_id: currentGroupId
+}));
 
   const weeklyStrength = weeklyStrengthRes.data || [];
   const weeklyWalk = weeklyWalkRes.data || [];
